@@ -1,0 +1,21 @@
+{
+    "name": "assetter/assetter",
+    "type": "library",
+    "description": "Assets manager for PHP. Allow manage CSS and JS files in website and its dependencies. Also allows refresh cache in browsers by adding revisions of loaded files.",
+    "keywords": ["asset","assets","files manager","manager"],
+    "homepage": "https://github.com/requtize/assetter",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Adam Banaszkiewicz",
+            "homepage": "http://adambanaszkiewicz.pl",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-4": {"Assetter\\": "src/"}
+    }
+}
