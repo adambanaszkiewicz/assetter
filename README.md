@@ -2,9 +2,9 @@
 Assets manager for PHP. Allow manage CSS and JS files in website and its dependencies. Also allows refresh cache in browsers by adding revisions of loaded files. Assetter allows you to register namespaces for files paths fo better managing if required.
 
 ## Table of contents
-* [Basics](basics)
+* [Basics](#basics)
     1. [Define collection array](#1-define-configuration-array)
-    2. [Create Assetter object](2-create-assetter-object)
+    2. [Create Assetter object](#2-create-assetter-object)
     3. [Load some libraries](#3-load-some-libraries)
         * [Include custom library](#3a-include-custom-library)
     4. [Show loaded files in document](#4-show-loaded-files-in-document)
