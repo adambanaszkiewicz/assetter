@@ -3,10 +3,10 @@ Assets manager for PHP. Allow manage CSS and JS files in website and its depende
 
 ## Table of contents
 * [Basics](#basics)
-    1. [Define collection array](#1-define-configuration-array)
+    1. [Define collection array](#1-define-collection-array)
     2. [Create Assetter object](#2-create-assetter-object)
     3. [Load some libraries](#3-load-some-libraries)
-        * [Include custom library](#3a-include-custom-library)
+        * [Load custom library](#3a-load-custom-library)
     4. [Show loaded files in document](#4-show-loaded-files-in-document)
 * [Namespaces](#namespaces)
     1. [Register namespace](#1-register-namespace)
