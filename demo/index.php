@@ -5,7 +5,7 @@ $assets = include 'assets.php';
 include '../src/Assetter/Assetter.php';
 
 // Load Asseter from array of asset conf.
-$assetter = new Assetter\Assetter\Assetter($assets);
+$assetter = new Requtize\Assetter\Assetter($assets);
 
 // Register namespaces, if required.
 $assetter->registerNamespace('{NAME}', '/some/namespaced/path/to-assets');
@@ -30,4 +30,4 @@ $assetter->load([
     'require' => ['jquery-ui']
 ]);
 
-echo '<pre>'.htmlspecialchars($assetter->css())."\n".htmlspecialchars($assetter->js()).'</pre>';
+echo '<pre>'.($assetter->css())."\n".($assetter->js()).'</pre>';

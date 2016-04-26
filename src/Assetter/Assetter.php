@@ -1,21 +1,19 @@
 <?php
 /**
- * Copyright (c) 2015 by Adam Banaszkiewicz
+ * Copyright (c) 2016 by Adam Banaszkiewicz
  *
  * @license   MIT License
- * @copyright Copyright (c) 2015, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
-namespace Assetter\Assetter;
+namespace Requtize\Assetter;
 
 /**
  * Asseter class. Manage assets (CSS and JS) for website, and it's
  * dependencies by other assets. Allows load full lib by giving a name
  * or append custom library's files.
  *
- * @author    Adam Banaszkiewicz https://github.com/requtize
- * @version   0.1.0
- * @date      2015.10.24
+ * @author Adam Banaszkiewicz https://github.com/requtize
  */
 class Assetter
 {

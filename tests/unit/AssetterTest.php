@@ -1,6 +1,6 @@
 <?php
 
-use Assetter\Assetter\Assetter;
+use Requtize\Assetter\Assetter;
 
 class AssetterTest extends PHPUnit_Framework_TestCase
 {
