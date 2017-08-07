@@ -2,7 +2,9 @@
 
 $assets = include 'assets.php';
 
-include '../vendor/autoload.php';
+include '../src/Assetter/Assetter.php';
+include '../src/Assetter/PluginInterface.php';
+include '../src/Assetter/Plugin/LeafoLessPhpPlugin.php';
 
 // Load Asseter from array of asset conf.
 $assetter = new Requtize\Assetter\Assetter($assets);

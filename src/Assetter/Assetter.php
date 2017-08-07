@@ -126,17 +126,17 @@ class Assetter
      * as next params of function.
      * @param  string $event Event name to fire.
      * @param  array  $args  Array fo args.
-     * @return array  Modified arguments.
+     * @return self
      */
     public function fireEvent($event, array $args = [])
     {
         if(isset($this->eventListeners[$event]) === false)
-            return $args;
+            return $this;
 
         foreach($this->eventListeners[$event] as $listener)
             call_user_func_array($listener, $args);
 
-        return $args;
+        return $this;
     }
 
     /**
@@ -147,7 +147,7 @@ class Assetter
      */
     public function registerNamespace($ns, $def)
     {
-        list($ns, $def) = $this->fireEvent('namespace.register', [ $ns, $def ]);
+        $this->fireEvent('namespace.register', [ $ns, $def ]);
 
         $this->namespaces[$ns] = $def;
 
@@ -161,7 +161,7 @@ class Assetter
      */
     public function unregisterNamespace($ns)
     {
-        list($ns) = $this->fireEvent('namespace.unregister', [ $ns ]);
+        $this->fireEvent('namespace.unregister', [ $ns ]);
 
         unset($this->namespaces[$ns]);
 
@@ -184,7 +184,7 @@ class Assetter
      */
     public function setRevision($revision)
     {
-        list($revision) = $this->fireEvent('revision.set', [ $revision ]);
+        $this->fireEvent('revision.set', [ $revision ]);
 
         $this->revision = $revision;
 
@@ -208,7 +208,7 @@ class Assetter
      */
     public function setDefaultGroup($defaultGroup)
     {
-        list($defaultGroup) = $this->fireEvent('default-group.set', [ $defaultGroup ]);
+        $this->fireEvent('default-group.set', [ $defaultGroup ]);
 
         $this->defaultGroup = $defaultGroup;
 
@@ -231,7 +231,7 @@ class Assetter
      */
     public function setCollection(array $collection)
     {
-        list($collection) = $this->fireEvent('collection.set', [ $collection ]);
+        $this->fireEvent('collection.set', [ $collection ]);
 
         foreach($collection as $asset)
         {
@@ -249,7 +249,7 @@ class Assetter
      */
     public function appendToCollection(array $data)
     {
-        list($data) = $this->fireEvent('append-to-collection', [ $data ]);
+        $this->fireEvent('append-to-collection', [ $data ]);
 
         $this->collection[] = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
@@ -270,7 +270,7 @@ class Assetter
      */
     public function load($data)
     {
-        list($data) = $this->fireEvent('load', [ $data ]);
+        $this->fireEvent('load', [ $data ]);
 
         if(is_array($data))
         {
@@ -296,7 +296,7 @@ class Assetter
             return $this;
         }
 
-        list($name) = $this->fireEvent('load-from-collection', [ $name ]);
+        $this->fireEvent('load-from-collection', [ $name ]);
 
         foreach($this->collection as $item)
         {
@@ -317,7 +317,7 @@ class Assetter
      */
     public function loadFromArray(array $data)
     {
-        list($data) = $this->fireEvent('load-from-array', [ $data ]);
+        $this->fireEvent('load-from-array', [ $data ]);
 
         $item = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
@@ -377,7 +377,7 @@ class Assetter
         $cssList = $this->getLoadedCssList($group);
         $jsList  = $this->getLoadedJsList($group);
 
-        list($cssList, $jsList) = $this->fireEvent('load.all', [ & $cssList, & $jsList ]);
+        $this->fireEvent('load.all', [ $cssList, $jsList ]);
 
         $cssList = $this->transformListToLinkHtmlNodes($cssList);
         $jsList  = $this->transformListToScriptHtmlNodes($jsList);
@@ -397,7 +397,7 @@ class Assetter
 
         $cssList = $this->getLoadedCssList($group);
 
-        list($cssList) = $this->fireEvent('load.css', [ & $cssList ]);
+        $this->fireEvent('load.css', [ $cssList ]);
 
         $cssList = $this->transformListToLinkHtmlNodes($cssList);
 
@@ -416,7 +416,7 @@ class Assetter
 
         $jsList = $this->getLoadedJsList($group);
 
-        list($jsList) = $this->fireEvent('load.js', [ & $jsList ]);
+        $this->fireEvent('load.js', [ $jsList ]);
 
         $jsList = $this->transformListToScriptHtmlNodes($jsList);
 
