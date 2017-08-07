@@ -1,9 +1,9 @@
 <?php
 /**
- * Copyright (c) 2016 by Adam Banaszkiewicz
+ * Copyright (c) 2016 - 2017 by Adam Banaszkiewicz
  *
  * @license   MIT License
- * @copyright Copyright (c) 2016, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016 - 2017, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
 namespace Requtize\Assetter;
@@ -56,6 +56,12 @@ class Assetter
     protected $eventListeners = [];
 
     /**
+     * List of registered plugins.
+     * @var array
+     */
+    protected $plugins = [];
+
+    /**
      * Constructor.
      * @param array   $collection   Collection of assets.
      * @param integer $revision     Global revision number. Allows refresh files
@@ -86,6 +92,20 @@ class Assetter
     public function doClone()
     {
         return clone $this;
+    }
+
+    /**
+     * Registers plugin and add to list.
+     * @param  PluginInterface $plugin PluginInterface object.
+     * @return self
+     */
+    public function registerPlugin(PluginInterface $plugin)
+    {
+        $plugin->register($this);
+
+        $this->plugins[] = $plugin;
+
+        return $this;
     }
 
     /**
