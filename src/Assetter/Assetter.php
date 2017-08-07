@@ -50,6 +50,12 @@ class Assetter
     protected $namespaces = [];
 
     /**
+     * Store events listeners.
+     * @var array
+     */
+    protected $eventListeners = [];
+
+    /**
      * Constructor.
      * @param array   $collection   Collection of assets.
      * @param integer $revision     Global revision number. Allows refresh files
@@ -83,6 +89,37 @@ class Assetter
     }
 
     /**
+     * Attaches callable method/function to given event name.
+     * @param  string   $event    Event name.
+     * @param  callable $callable Callacbke that is fired when event is triggered.
+     * @return self
+     */
+    public function listenEvent($event, $callable)
+    {
+        $this->eventListeners[$name][] = $callable;
+
+        return $this;
+    }
+
+    /**
+     * Fires event with specified arguments. Arguments were passed
+     * as next params of function.
+     * @param  string $event Event name to fire.
+     * @param  array  $args  Array fo args.
+     * @return self
+     */
+    public function fireEvent($event, array $args = [])
+    {
+        if(isset($this->eventListeners[$name]) === false)
+            return $this;
+
+        foreach($this->eventListeners[$name] as $listener)
+            call_user_func_array($callable, $args);
+
+        return $this;
+    }
+
+    /**
      * Register namespace.
      * @param  string $ns  Namespace name.
      * @param  string $def Namespace path.
@@ -90,6 +127,8 @@ class Assetter
      */
     public function registerNamespace($ns, $def)
     {
+        $this->fireEvent('namespace.register', [ $ns, $def ]);
+
         $this->namespaces[$ns] = $def;
 
         return $this;
@@ -102,6 +141,8 @@ class Assetter
      */
     public function unregisterNamespace($ns)
     {
+        $this->fireEvent('namespace.unregister', [ $ns ]);
+
         unset($this->namespaces[$ns]);
 
         return $this;
@@ -123,6 +164,8 @@ class Assetter
      */
     public function setRevision($revision)
     {
+        $this->fireEvent('revision.set', [ $revision ]);
+
         $this->revision = $revision;
 
         return $this;
@@ -145,6 +188,8 @@ class Assetter
      */
     public function setDefaultGroup($defaultGroup)
     {
+        $this->fireEvent('default-group.set', [ $defaultGroup ]);
+
         $this->defaultGroup = $defaultGroup;
 
         return $this;
@@ -166,6 +211,8 @@ class Assetter
      */
     public function setCollection(array $collection)
     {
+        $this->fireEvent('collection.set', [ $collection ]);
+
         foreach($collection as $asset)
         {
             $this->appendToCollection($asset);
@@ -182,6 +229,8 @@ class Assetter
      */
     public function appendToCollection(array $data)
     {
+        $this->fireEvent('append-to-collection', [ $data ]);
+
         $this->collection[] = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
             'revision' => isset($data['revision']) ? $data['revision'] : $this->revision,
@@ -201,6 +250,8 @@ class Assetter
      */
     public function load($data)
     {
+        $this->fireEvent('load', [ $data ]);
+
         if(is_array($data))
         {
             $this->loadFromArray($data);
@@ -225,6 +276,8 @@ class Assetter
             return $this;
         }
 
+        $this->fireEvent('load-from-collection', [ $name ]);
+
         foreach($this->collection as $item)
         {
             if($item['name'] === $name)
@@ -244,6 +297,8 @@ class Assetter
      */
     public function loadFromArray(array $data)
     {
+        $this->fireEvent('load-from-array', [ $data ]);
+
         $item = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
             'revision' => isset($data['revision']) ? $data['revision'] : $this->revision,
@@ -299,7 +354,12 @@ class Assetter
     {
         $this->sort();
 
-        return implode("\n", $this->getLoadedCssList($group))."\n".implode("\n", $this->getLoadedJsList($group));
+        $cssList = $this->getLoadedCssList($group);
+        $jsList  = $this->getLoadedJsList($group);
+
+        $this->fireEvent('load.all', [ $cssList, $jsList ]);
+
+        return implode("\n", $cssList)."\n".implode("\n", $jsList);
     }
 
     /**
@@ -312,7 +372,11 @@ class Assetter
     {
         $this->sort();
 
-        return implode("\n", $this->getLoadedCssList($group));
+        $cssList = $this->getLoadedCssList($group);
+
+        $this->fireEvent('load.css', [ $cssList ]);
+
+        return implode("\n", $cssList);
     }
 
     /**
@@ -325,7 +389,11 @@ class Assetter
     {
         $this->sort();
 
-        return implode("\n", $this->getLoadedJsList($group));
+        $jsList = $this->getLoadedJsList($group);
+
+        $this->fireEvent('load.css', [ $jsList ]);
+
+        return implode("\n", $jsList);
     }
 
     protected function applyNamespaces(array $files)
