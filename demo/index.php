@@ -3,6 +3,8 @@
 $assets = include 'assets.php';
 
 include '../src/Assetter/Assetter.php';
+include '../src/Assetter/PluginInterface.php';
+include '../src/Assetter/Plugin/LeafoLessPhpPlugin.php';
 
 // Load Asseter from array of asset conf.
 $assetter = new Requtize\Assetter\Assetter($assets);
@@ -31,5 +33,7 @@ $assetter->load([
     'order' => 101,
     'require' => ['jquery-ui']
 ]);
+
+$assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoLessPhpPlugin);
 
 echo '<pre>'.($assetter->css())."\n".($assetter->js()).'</pre>';
