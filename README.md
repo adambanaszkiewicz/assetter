@@ -139,3 +139,10 @@ When we have registered namespaces, we only now have to add name of namespace to
 ]
 ```
 Namespace can be named as you want, here i provide proposal, you can use any way of name convencion, like: {NS}, [NS], %NS, |NS|, -NS, and combine small and big letters as names. But remember to add some special characters. Assetter uses [str_replace](http://php.net/manual/en/function.str-replace.php) for seach and replace namespaces, so if you named namespace with only letters, some assets paths can be damaged.
+
+
+# Todo
+
+- Add SASS and LESS files cache.
+- Add SASS and LESS tests.
+- Update doc for SASS and LESS.
