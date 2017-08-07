@@ -134,7 +134,7 @@ class Assetter
             return $this;
 
         foreach($this->eventListeners[$event] as $listener)
-            call_user_func_array($callable, $args);
+            call_user_func_array($listener, $args);
 
         return $this;
     }
