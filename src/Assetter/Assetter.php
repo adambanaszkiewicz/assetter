@@ -379,6 +379,9 @@ class Assetter
 
         $this->fireEvent('load.all', [ $cssList, $jsList ]);
 
+        $cssList = $this->transformListToLinkHtmlNodes($cssList);
+        $jsList  = $this->transformListToScriptHtmlNodes($jsList);
+
         return implode("\n", $cssList)."\n".implode("\n", $jsList);
     }
 
@@ -396,6 +399,8 @@ class Assetter
 
         $this->fireEvent('load.css', [ $cssList ]);
 
+        $cssList = $this->transformListToLinkHtmlNodes($cssList);
+
         return implode("\n", $cssList);
     }
 
@@ -411,7 +416,9 @@ class Assetter
 
         $jsList = $this->getLoadedJsList($group);
 
-        $this->fireEvent('load.css', [ $jsList ]);
+        $this->fireEvent('load.js', [ $jsList ]);
+
+        $jsList = $this->transformListToScriptHtmlNodes($jsList);
 
         return implode("\n", $jsList);
     }
@@ -454,10 +461,25 @@ class Assetter
 
             if(isset($item['files']['css']) && is_array($item['files']['css']))
             {
-                foreach($item['files']['css'] as $file)
-                {
-                    $result[] = '<link rel="stylesheet" type="text/css" href="'.$file.($item['revision'] == 0 ? '' : '?rev='.$item['revision']).'" />';
-                }
+                $result[] = [
+                    'files'    => $item['files']['css'],
+                    'revision' => $item['revision']
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    protected function transformListToLinkHtmlNodes(array $list)
+    {
+        $result = [];
+
+        foreach($list as $group)
+        {
+            foreach($group['files'] as $file)
+            {
+                $result[] = '<link rel="stylesheet" type="text/css" href="'.$file.($group['revision'] == 0 ? '' : '?rev='.$group['revision']).'" />';
             }
         }
 
@@ -482,10 +504,25 @@ class Assetter
 
             if(isset($item['files']['js']) && is_array($item['files']['js']))
             {
-                foreach($item['files']['js'] as $file)
-                {
-                    $result[] = '<script src="'.$file.($item['revision'] == 0 ? '' : '?rev='.$item['revision']).'"></script>';
-                }
+                $result[] = [
+                    'files'    => $item['files']['js'],
+                    'revision' => $item['revision']
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    protected function transformListToScriptHtmlNodes(array $list)
+    {
+        $result = [];
+
+        foreach($list as $group)
+        {
+            foreach($group['files'] as $file)
+            {
+                $result[] = '<script src="'.$file.($group['revision'] == 0 ? '' : '?rev='.$group['revision']).'"></script>';
             }
         }
 
