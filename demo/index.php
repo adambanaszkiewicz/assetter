@@ -34,6 +34,6 @@ $assetter->load([
     'require' => ['jquery-ui']
 ]);
 
-$assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoLessPhpPlugin);
+$assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoLessPhpPlugin(__DIR__));
 
 echo '<pre>'.($assetter->css())."\n".($assetter->js()).'</pre>';
