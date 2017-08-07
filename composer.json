@@ -16,6 +16,10 @@
     "require": {
         "php": "~5.5 || ^7.0"
     },
+    "suggest": {
+        "leafo/scssphp": "Allows write styles in SASS and compile files directly to CSS just-in-time.",
+        "leafo/lessphp": "Allows write styles in LESS and compile files directly to CSS just-in-time."
+    },
     "autoload": {
         "psr-4": {
             "Requtize\\Assetter\\": "src/Assetter/"
