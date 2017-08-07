@@ -1,0 +1,3 @@
+$color: #abc;
+
+div { color: lighten($color, 20%); }

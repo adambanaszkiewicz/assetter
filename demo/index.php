@@ -23,7 +23,9 @@ $assetter->load([
             '/my/own/file.js'
         ],
         'css' => [
-            '/my/own/file.css'
+            '/my/own/file.css',
+            '/assets/less.less',
+            '/assets/scss.scss'
         ]
     ],
     'order' => 101,
