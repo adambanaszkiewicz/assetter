@@ -96,7 +96,7 @@ class Assetter
      */
     public function listenEvent($event, $callable)
     {
-        $this->eventListeners[$name][] = $callable;
+        $this->eventListeners[$event][] = $callable;
 
         return $this;
     }
@@ -110,10 +110,10 @@ class Assetter
      */
     public function fireEvent($event, array $args = [])
     {
-        if(isset($this->eventListeners[$name]) === false)
+        if(isset($this->eventListeners[$event]) === false)
             return $this;
 
-        foreach($this->eventListeners[$name] as $listener)
+        foreach($this->eventListeners[$event] as $listener)
             call_user_func_array($callable, $args);
 
         return $this;
