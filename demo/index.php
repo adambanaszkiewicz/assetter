@@ -32,7 +32,9 @@ $assetter->load([
     'require' => ['jquery-ui']
 ]);
 
-$assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoLessPhpPlugin(__DIR__));
-$assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoScssPhpPlugin(__DIR__));
+if(class_exists('lessc'))
+    $assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoLessPhpPlugin(__DIR__));
+if(class_exists('scssc'))
+    $assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoScssPhpPlugin(__DIR__));
 
 echo '<pre>'.($assetter->css())."\n".($assetter->js()).'</pre>';
