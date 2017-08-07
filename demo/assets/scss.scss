@@ -1,3 +1,20 @@
 $color: #abc;
 
 div { color: lighten($color, 20%); }
+
+
+.navigation {
+    ul {
+        line-height: 20px;
+        color: blue;
+        a {
+            color: red;
+        }
+    }
+}
+
+.footer {
+    .copyright {
+        color: silver;
+    }
+}
