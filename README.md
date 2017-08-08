@@ -145,6 +145,5 @@ Namespace can be named as you want, here i provide proposal, you can use any way
 
 # Todo
 
-- Add SASS and LESS files cache.
 - Add SASS and LESS tests.
 - Update doc for SASS and LESS.
