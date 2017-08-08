@@ -14,13 +14,51 @@ use Requtize\Assetter\PluginInterface;
 
 class LeafoLessPhpPlugin implements PluginInterface
 {
-    protected $filesRoot = null;
+    const CACHE_FILENAME = 'assetter.leafo-less.serialize';
 
-    public function __construct($filesRoot)
+    protected $filesRoot;
+    protected $cacheDir;
+    protected $cacheData = [];
+    protected $cacheNeedRefresh = false;
+
+    public function __construct($filesRoot, $cacheDir = null)
     {
         $this->filesRoot = $filesRoot;
+        $this->setCacheDir($cacheDir ?: __DIR__.'/../../../cache');
         $this->less = new lessc;
         $this->less->setFormatter('compressed');
+    }
+
+    public function __destruct()
+    {
+        if($this->cacheNeedRefresh)
+        {
+            file_put_contents($this->cacheDir.'/'.self::CACHE_FILENAME, serialize($this->cacheData));
+        }
+    }
+
+    public function setCacheDir($cacheDir)
+    {
+        $this->cacheDir = $cacheDir;
+
+        if(is_dir($this->cacheDir) === false)
+        {
+            mkdir($this->cacheDir, 0777, true);
+        }
+
+        if(is_file($this->cacheDir.'/'.self::CACHE_FILENAME))
+        {
+            $data = file_get_contents($this->cacheDir.'/'.self::CACHE_FILENAME);
+
+            @ $unserialized = (array) unserialize($data);
+
+            if(is_array($unserialized))
+            {
+                $this->cacheData = $unserialized;
+            }
+        }
+
+        return $this;
     }
 
     public function register(Assetter $assetter)
@@ -45,10 +83,27 @@ class LeafoLessPhpPlugin implements PluginInterface
 
     public function compile($filepath)
     {
-        $filepathNew = str_replace('.less', '.css', $filepath);
+        $filepathRoot = $this->filesRoot.$filepath;
+        $filepathNew  = str_replace('.less', '.css', $filepath);
 
-        $this->less->checkedCompile($this->filesRoot.$filepath, $this->filesRoot.$filepathNew);
+        if($this->isFileFresh($filepathRoot) === false)
+        {
+            $css = $this->less->compile(file_get_contents($filepathRoot));
+
+            file_put_contents($this->filesRoot.$filepathNew, $css);
+
+            $this->cacheData[$filepathRoot] = filemtime($filepathRoot);
+            $this->cacheNeedRefresh = true;
+        }
 
         return $filepathNew;
+    }
+
+    public function isFileFresh($filepath)
+    {
+        if(isset($this->cacheData[$filepath]) === false)
+            return false;
+
+        return $this->cacheData[$filepath] >= filemtime($filepath);
     }
 }
