@@ -8,61 +8,27 @@
  */
 namespace Requtize\Assetter\Plugin;
 
-use scssc;
+use Leafo\ScssPhp\Compiler;
+use Leafo\ScssPhp\Formatter\Crunched;
 use Requtize\Assetter\Assetter;
 use Requtize\Assetter\PluginInterface;
 
 class LeafoScssPhpPlugin implements PluginInterface
 {
-    const CACHE_FILENAME = 'assetter.leafo-scss.serialize';
-
     protected $filesRoot;
-    protected $cacheDir;
-    protected $cacheData = [];
-    protected $cacheNeedRefresh = false;
+    protected $freshFile;
 
-    public function __construct($filesRoot, $cacheDir = null)
+    public function __construct($filesRoot)
     {
         $this->filesRoot = $filesRoot;
-        $this->setCacheDir($cacheDir ?: __DIR__.'/../../../cache');
-        $this->scss = new scssc;
-        $this->scss->setFormatter('scss_formatter_compressed');
-    }
-
-    public function __destruct()
-    {
-        if($this->cacheNeedRefresh)
-        {
-            file_put_contents($this->cacheDir.'/'.self::CACHE_FILENAME, serialize($this->cacheData));
-        }
-    }
-
-    public function setCacheDir($cacheDir)
-    {
-        $this->cacheDir = $cacheDir;
-
-        if(is_dir($this->cacheDir) === false)
-        {
-            mkdir($this->cacheDir, 0777, true);
-        }
-
-        if(is_file($this->cacheDir.'/'.self::CACHE_FILENAME))
-        {
-            $data = file_get_contents($this->cacheDir.'/'.self::CACHE_FILENAME);
-
-            @ $unserialized = (array) unserialize($data);
-
-            if(is_array($unserialized))
-            {
-                $this->cacheData = $unserialized;
-            }
-        }
-
-        return $this;
+        $this->scss = new Compiler;
+        $this->scss->setFormatter(Crunched::class);
     }
 
     public function register(Assetter $assetter)
     {
+        $this->freshFile = $assetter->getFreshFile();
+
         $assetter->listenEvent('load.all', [ $this, 'replaceAndCompile' ]);
         $assetter->listenEvent('load.css', [ $this, 'replaceAndCompile' ]);
     }
@@ -73,9 +39,10 @@ class LeafoScssPhpPlugin implements PluginInterface
         {
             foreach($group['files'] as $key => $file)
             {
-                if(substr($file, -5, 5) === '.scss')
+                if(substr($file['file'], -5, 5) === '.scss')
                 {
-                    $groups[$kg]['files'][$key] = $this->compile($file);
+                    $groups[$kg]['files'][$key]['file']     = $this->compile($file['file']);
+                    $groups[$kg]['files'][$key]['revision'] = $this->freshFile->getFilemtimeMetadata($this->filesRoot.$file['file']);
                 }
             }
         }
@@ -86,24 +53,13 @@ class LeafoScssPhpPlugin implements PluginInterface
         $filepathRoot = $this->filesRoot.$filepath;
         $filepathNew  = str_replace('.scss', '.css', $filepath);
 
-        if($this->isFileFresh($filepathRoot) === false)
+        if($this->freshFile->isFresh($filepathRoot) === false)
         {
             $css = $this->scss->compile(file_get_contents($filepathRoot));
 
             file_put_contents($this->filesRoot.$filepathNew, $css);
-
-            $this->cacheData[$filepathRoot] = filemtime($filepathRoot);
-            $this->cacheNeedRefresh = true;
         }
 
         return $filepathNew;
-    }
-
-    public function isFileFresh($filepath)
-    {
-        if(isset($this->cacheData[$filepath]) === false)
-            return false;
-
-        return $this->cacheData[$filepath] >= filemtime($filepath);
     }
 }

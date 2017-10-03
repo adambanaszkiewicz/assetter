@@ -8,6 +8,8 @@
  */
 namespace Requtize\Assetter;
 
+use Requtize\FreshFile\FreshFile;
+
 /**
  * Asseter class. Manage assets (CSS and JS) for website, and it's
  * dependencies by other assets. Allows load full lib by giving a name
@@ -17,6 +19,11 @@ namespace Requtize\Assetter;
  */
 class Assetter
 {
+    /**
+     * @var Requtize\FreshFile\FreshFile
+     */
+    protected $freshFile;
+
     /**
      * Stores collection of libraries to load.
      * @var array
@@ -63,17 +70,11 @@ class Assetter
 
     /**
      * Constructor.
-     * @param array   $collection   Collection of assets.
-     * @param integer $revision     Global revision number. Allows refresh files
-     *                              in browsers Cache by adding get value to file path.
-     *                              In example: ?rev=2
-     * @param string  $default      Group name of default group of assets.
+     * @param FreshFile $freshFile
      */
-    public function __construct(array $collection = [], $revision = 0, $defaultGroup = 'def')
+    public function __construct(FreshFile $freshFile)
     {
-        $this->setRevision($revision);
-        $this->setDefaultGroup($defaultGroup);
-        $this->setCollection($collection);
+        $this->freshFile = $freshFile;
     }
 
     /**
@@ -95,6 +96,15 @@ class Assetter
     }
 
     /**
+     * Returns FreshFile object.
+     * @return FreshFile
+     */
+    public function getFreshFile()
+    {
+        return $this->freshFile;
+    }
+
+    /**
      * Registers plugin and add to list.
      * @param  PluginInterface $plugin PluginInterface object.
      * @return self
@@ -108,10 +118,15 @@ class Assetter
         return $this;
     }
 
+    public function getRegisteredPlugins()
+    {
+        return $this->plugins;
+    }
+
     /**
      * Attaches callable method/function to given event name.
      * @param  string   $event    Event name.
-     * @param  callable $callable Callacbke that is fired when event is triggered.
+     * @param  callable $callable Callback that is fired when event is triggered.
      * @return self
      */
     public function listenEvent($event, $callable)
@@ -164,29 +179,6 @@ class Assetter
         list($ns) = $this->fireEvent('namespace.unregister', [ $ns ]);
 
         unset($this->namespaces[$ns]);
-
-        return $this;
-    }
-
-    /**
-     * Gets current global revision of files.
-     * @return integer
-     */
-    public function getRevision()
-    {
-        return $this->revision;
-    }
-
-    /**
-     * Sets global revision of files.
-     * @param integer $revision Revision number.
-     * @return self
-     */
-    public function setRevision($revision)
-    {
-        list($revision) = $this->fireEvent('revision.set', [ $revision ]);
-
-        $this->revision = $revision;
 
         return $this;
     }
@@ -251,11 +243,17 @@ class Assetter
     {
         list($data) = $this->fireEvent('append-to-collection', [ $data ]);
 
+        $files = [];
+
+        if(isset($data['files']['js']) && is_array($data['files']['js']))
+            $files['js'] = $this->resolveFilesList($data['files']['js']);
+        if(isset($data['files']['css']) && is_array($data['files']['css']))
+            $files['css'] = $this->resolveFilesList($data['files']['css']);
+
         $this->collection[] = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
-            'revision' => isset($data['revision']) ? $data['revision'] : $this->revision,
-            'name'     => isset($data['name']) ? $data['name'] : uniqid(),
-            'files'    => isset($data['files']) ? $data['files'] : [],
+            'name'     => isset($data['name'])  ? $data['name']  : uniqid(),
+            'files'    => $files,
             'group'    => isset($data['group']) ? $data['group'] : $this->defaultGroup,
             'require'  => isset($data['require']) ? $data['require'] : []
         ];
@@ -319,11 +317,17 @@ class Assetter
     {
         list($data) = $this->fireEvent('load-from-array', [ $data ]);
 
+        $files = [];
+
+        if(isset($data['files']['js']) && is_array($data['files']['js']))
+            $files['js'] = $this->resolveFilesList($data['files']['js']);
+        if(isset($data['files']['css']) && is_array($data['files']['css']))
+            $files['css'] = $this->resolveFilesList($data['files']['css']);
+
         $item = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
-            'revision' => isset($data['revision']) ? $data['revision'] : $this->revision,
             'name'     => isset($data['name']) ? $data['name'] : uniqid(),
-            'files'    => isset($data['files']) ? $data['files'] : [],
+            'files'    => $files,
             'group'    => isset($data['group']) ? $data['group'] : $this->defaultGroup,
             'require'  => isset($data['require']) ? $data['require'] : []
         ];
@@ -423,6 +427,38 @@ class Assetter
         return implode("\n", $jsList);
     }
 
+    protected function resolveFilesList(array $files)
+    {
+        $result = [];
+
+        foreach($files as $key => $val)
+        {
+            if(is_numeric($key) && is_string($val))
+            {
+                $result[] = [
+                    'file'     => $val,
+                    'revision' => null
+                ];
+            }
+            elseif(is_numeric($key) && is_array($val))
+            {
+                $result[] = [
+                    'file'     => isset($val['file']) ? $val['file'] : null,
+                    'revision' => isset($val['revision']) ? $val['revision'] : null
+                ];
+            }
+            elseif(is_string($key) && is_numeric($val))
+            {
+                $result[] = [
+                    'file'     => $key,
+                    'revision' => $val
+                ];
+            }
+        }
+
+        return $result;
+    }
+
     protected function applyNamespaces(array $files)
     {
         foreach($files as $key => $file)
@@ -462,8 +498,7 @@ class Assetter
             if(isset($item['files']['css']) && is_array($item['files']['css']))
             {
                 $result[] = [
-                    'files'    => $item['files']['css'],
-                    'revision' => $item['revision']
+                    'files' => $item['files']['css']
                 ];
             }
         }
@@ -479,7 +514,7 @@ class Assetter
         {
             foreach($group['files'] as $file)
             {
-                $result[] = '<link rel="stylesheet" type="text/css" href="'.$file.($group['revision'] == 0 ? '' : '?rev='.$group['revision']).'" />';
+                $result[] = '<link rel="stylesheet" type="text/css" href="'.$file['file'].($file['revision'] ? '?rev='.$file['revision'] : '').'" />';
             }
         }
 
@@ -505,8 +540,7 @@ class Assetter
             if(isset($item['files']['js']) && is_array($item['files']['js']))
             {
                 $result[] = [
-                    'files'    => $item['files']['js'],
-                    'revision' => $item['revision']
+                    'files' => $item['files']['js']
                 ];
             }
         }
@@ -522,7 +556,7 @@ class Assetter
         {
             foreach($group['files'] as $file)
             {
-                $result[] = '<script src="'.$file.($group['revision'] == 0 ? '' : '?rev='.$group['revision']).'"></script>';
+                $result[] = '<script src="'.$file['file'].($file['revision'] ? '?rev='.$file['revision'] : '').'"></script>';
             }
         }
 

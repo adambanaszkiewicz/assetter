@@ -1,3 +1,3 @@
 <?php
 
-include 'src/Assetter/Assetter.php';
+include __DIR__.'/../../vendor/autoload.php';

@@ -1,29 +1,25 @@
 <?php
 
 use Requtize\Assetter\Assetter;
+use Requtize\FreshFile\FreshFile;
 
 class AssetterTest extends PHPUnit_Framework_TestCase
 {
-    public function testCheckDefaultGroupAndRevision()
+    protected function createAssetterObject()
     {
-        $assetter = new Assetter();
+        $ff = new FreshFile(__DIR__.'/fresh-file.cache');
 
-        $this->assertEquals(0, $assetter->getRevision());
-        $this->assertEquals('def', $assetter->getDefaultGroup());
-    }
+        $file = $ff->getCacheFilepath();
 
-    public function testChangeDefaultRevision()
-    {
-        $assetter = new Assetter();
+        if(is_file($file))
+            unlink($file);
 
-        $assetter->setRevision(11);
-
-        $this->assertEquals(11, $assetter->getRevision());
+        return new Assetter($ff);
     }
 
     public function testChangeDefaultGroup()
     {
-        $assetter = new Assetter();
+        $assetter = $this->createAssetterObject();
 
         $assetter->setDefaultGroup('new-group');
 
@@ -36,7 +32,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
     public function testGetJs($data)
     {
         $shouldBe = '<script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>';
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
 
         // Here, should be empty result.
         $this->assertEquals('', $assetter->js());
@@ -51,7 +48,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
     public function testGetCss($data)
     {
         $shouldBe = '<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.3/jquery-ui.min.css" />';
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
 
         // Here, should be empty result.
         $this->assertEquals('', $assetter->css());
@@ -66,7 +64,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
     public function testGetAll($data)
     {
         $shouldBe = '<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.3/jquery-ui.min.css" />'."\n".'<script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>';
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
 
         // Here, should be empty result.
         $this->assertEquals("\n", $assetter->all());
@@ -81,7 +80,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
     public function testDoubleGetAll($data)
     {
         $shouldBe = '<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.3/jquery-ui.min.css" />'."\n".'<script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>';
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
 
         // Here, should be empty result.
         $this->assertEquals("\n", $assetter->all());
@@ -118,7 +118,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
             ]
         ];
 
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
 
         // Here, should be empty result.
         $this->assertEquals(false, $assetter->alreadyLoaded('jquery'));
@@ -141,7 +142,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
             ]
         ];
 
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
 
         // Here, every asset should not be loaded
         $this->assertEquals(false, $assetter->alreadyLoaded('jquery'));
@@ -164,7 +166,7 @@ class AssetterTest extends PHPUnit_Framework_TestCase
     public function testAppendSimpleAndGet()
     {
         $shouldBe = '<link rel="stylesheet" type="text/css" href="/some/file.css" />'."\n".'<script src="/some/file.js"></script>';
-        $assetter = new Assetter;
+        $assetter = $this->createAssetterObject();
 
         $this->assertEquals("\n", $assetter->all());
 
@@ -180,34 +182,18 @@ class AssetterTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($shouldBe, $assetter->all());
     }
 
-    public function testLoadWithDefaultRevision()
-    {
-        $data = [
-            [
-                'name'  => 'jquery',
-                'files' => [ 'js' => [ 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.js' ], 'css' => [ 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.css' ] ]
-            ]
-        ];
-
-        $shouldBe = '<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.3/jquery-ui.min.css?rev=1" />'."\n".'<script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js?rev=1"></script>';
-        $assetter = new Assetter($data, 1);
-        $assetter->load('jquery');
-
-        $this->assertEquals($shouldBe, $assetter->all());
-    }
-
     public function testLoadWithDefinedRevision()
     {
         $data = [
             [
                 'name'  => 'jquery',
-                'revision' => 11,
-                'files' => [ 'js' => [ 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.js' ], 'css' => [ 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.css' ] ]
+                'files' => [ 'js' => [ 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.js' => 11 ], 'css' => [ [ 'file' => 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.css', 'revision' => 11 ] ] ]
             ]
         ];
 
         $shouldBe = '<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.3/jquery-ui.min.css?rev=11" />'."\n".'<script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js?rev=11"></script>';
-        $assetter = new Assetter($data, 1);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
         $assetter->load('jquery');
 
         $this->assertEquals($shouldBe, $assetter->all());
@@ -237,7 +223,9 @@ class AssetterTest extends PHPUnit_Framework_TestCase
             ]
         ];
 
-        $assetter = new Assetter($data, null, 'default-group');
+        $assetter = $this->createAssetterObject();
+        $assetter->setDefaultGroup('default-group');
+        $assetter->setCollection($data);
         $assetter->load('jquery')->load('one')->load('two')->load('three');
 
         $this->assertEquals('<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.11.3/jquery-ui.min.css" />'."\n".'<script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>', $assetter->all('default-group'));
@@ -251,7 +239,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
      */
     public function testRegisterNamespaces($data)
     {
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
         $assetter->registerNamespace('{NS1}', '/namespace');
 
         $assetter->load('one')->load('two')->load('three');
@@ -266,7 +255,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
      */
     public function testUnregisterNamespaces($data)
     {
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
         $assetter->registerNamespace('{NS1}', '/namespace');
 
         $assetter->load('one');
@@ -309,7 +299,8 @@ class AssetterTest extends PHPUnit_Framework_TestCase
      */
     public function testAssetsOrder($data)
     {
-        $assetter = new Assetter($data);
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
         $assetter->load('three')->load('two')->load('four');
 
         $this->assertEquals('<link rel="stylesheet" type="text/css" href="/one.css" />'
@@ -317,7 +308,7 @@ class AssetterTest extends PHPUnit_Framework_TestCase
                       ."\n".'<link rel="stylesheet" type="text/css" href="/two.css" />'
                       ."\n".'<link rel="stylesheet" type="text/css" href="/four.css" />'
                       ."\n".'<link rel="stylesheet" type="text/css" href="/five.css" />'
-                      ."\n".'', $assetter->all());
+                      ."\n", $assetter->all());
     }
 
     public static function providerInitArrayNine()
