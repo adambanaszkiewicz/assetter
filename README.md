@@ -170,3 +170,8 @@ To use, you have to only load the .scss or .less files from collection:
 ```
 
 Plugins automatically compile these files, it they are changed, and replace filenames to compiled versions. Also, FreshFile lib takes care of compilation cache, so once compiled file will not compile again until you change it.
+
+# @todo
+- DOC: Multiple versions of files array
+- DOC: Revisions
+- Add filemtime revisions instead of static numbers.
