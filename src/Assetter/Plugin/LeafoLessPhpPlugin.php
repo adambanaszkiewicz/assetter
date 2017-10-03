@@ -16,12 +16,11 @@ class LeafoLessPhpPlugin implements PluginInterface
 {
     protected $filesRoot;
     protected $freshFile;
+    protected $less;
 
     public function __construct($filesRoot)
     {
         $this->filesRoot = $filesRoot;
-        $this->less = new lessc;
-        $this->less->setFormatter('compressed');
     }
 
     public function register(Assetter $assetter)
@@ -54,11 +53,22 @@ class LeafoLessPhpPlugin implements PluginInterface
 
         if($this->freshFile->isFresh($filepathRoot) === false)
         {
+            $this->preparePlugin();
+
             $css = $this->less->compile(file_get_contents($filepathRoot));
 
             file_put_contents($this->filesRoot.$filepathNew, $css);
         }
 
         return $filepathNew;
+    }
+
+    protected function preparePlugin()
+    {
+        if($this->less)
+            return;
+
+        $this->less = new lessc;
+        $this->less->setFormatter('compressed');
     }
 }

@@ -17,12 +17,11 @@ class LeafoScssPhpPlugin implements PluginInterface
 {
     protected $filesRoot;
     protected $freshFile;
+    protected $scss;
 
     public function __construct($filesRoot)
     {
         $this->filesRoot = $filesRoot;
-        $this->scss = new Compiler;
-        $this->scss->setFormatter(Crunched::class);
     }
 
     public function register(Assetter $assetter)
@@ -55,11 +54,28 @@ class LeafoScssPhpPlugin implements PluginInterface
 
         if($this->freshFile->isFresh($filepathRoot) === false)
         {
+            $this->preparePlugin();
+
+            $this->scss->addImportPath(function($path) use ($filepath) {
+                $path = pathinfo($this->filesRoot.$filepath, PATHINFO_DIRNAME).'/'.$path;
+
+                return is_file($path) ? $path : null;
+            });
+
             $css = $this->scss->compile(file_get_contents($filepathRoot));
 
             file_put_contents($this->filesRoot.$filepathNew, $css);
         }
 
         return $filepathNew;
+    }
+
+    protected function preparePlugin()
+    {
+        if($this->scss)
+            return;
+
+        $this->scss = new Compiler;
+        $this->scss->setFormatter(Crunched::class);
     }
 }
