@@ -9,7 +9,7 @@ class LeafoScssCompilatorTest extends PHPUnit_Framework_TestCase
 {
     protected function createAssetterObject()
     {
-        $ff = new FreshFile(__DIR__.'/resources/fresh-file.cache');
+        $ff = new FreshFile(__DIR__.'/resources/.fresh-file');
 
         $file = $ff->getCacheFilepath();
 
@@ -46,7 +46,7 @@ class LeafoScssCompilatorTest extends PHPUnit_Framework_TestCase
     {
         $files = [
             __DIR__.'/resources/scss.css',
-            __DIR__.'/fresh-file.cache'
+            __DIR__.'/.fresh-file'
         ];
 
         foreach($files as $file)

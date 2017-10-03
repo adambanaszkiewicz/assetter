@@ -7,7 +7,7 @@ class AssetterTest extends PHPUnit_Framework_TestCase
 {
     protected function createAssetterObject()
     {
-        $ff = new FreshFile(__DIR__.'/fresh-file.cache');
+        $ff = new FreshFile(__DIR__.'/.fresh-file');
 
         $file = $ff->getCacheFilepath();
 
