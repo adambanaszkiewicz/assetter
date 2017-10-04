@@ -1,0 +1,22 @@
+@base2: 24px;
+@border-color2: #B2B;
+
+.underline2 { border-bottom: 1px solid green }
+
+#header2 {
+  color: black;
+  border: 1px solid @border-color2 + #222222;
+
+  .navigation2 {
+    font-size: @base2 / 2;
+    a {
+    .underline2;
+    }
+  }
+  .logo2 {
+    width: 300px;
+    :hover { text-decoration: none }
+  }
+}
+
+.less2 {padding:10px;background-color:red;color:#fff}

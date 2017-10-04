@@ -20,3 +20,5 @@ div { color: lighten($color, 20%); }
 }
 
 .scss {padding:10px;background-color:green;color:#fff}
+
+@import "scss-imported.scss";

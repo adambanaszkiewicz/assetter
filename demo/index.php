@@ -31,7 +31,6 @@ $assetter->load([
         'css' => [
             '/github-prod/assetter/demo/assets/less.less',
             '/github-prod/assetter/demo/assets/scss.scss',
-            '/github-prod/assetter/demo/assets/bootstrap-scss/bootstrap.scss',
         ]
     ],
     'order' => 101,
