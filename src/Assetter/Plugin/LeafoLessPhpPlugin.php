@@ -8,7 +8,7 @@
  */
 namespace Requtize\Assetter\Plugin;
 
-use lessc;
+use Requtize\Assetter\Plugin\Leafo\LessPhp\Compiler;
 use Requtize\Assetter\Assetter;
 use Requtize\Assetter\PluginInterface;
 
@@ -51,11 +51,13 @@ class LeafoLessPhpPlugin implements PluginInterface
         $filepathRoot = $this->filesRoot.$filepath;
         $filepathNew  = str_replace('.less', '.css', $filepath);
 
-        if($this->freshFile->isFresh($filepathRoot) === false)
+        if($this->freshFile->isFresh($filepathRoot))
         {
             $this->preparePlugin();
 
-            $css = $this->less->compile(file_get_contents($filepathRoot));
+            $css = $this->less->compileFile($filepathRoot);
+
+            $this->freshFile->setRelatedFiles($filepathRoot, array_keys($this->less->allParsedFiles()));
 
             file_put_contents($this->filesRoot.$filepathNew, $css);
         }
@@ -68,7 +70,7 @@ class LeafoLessPhpPlugin implements PluginInterface
         if($this->less)
             return;
 
-        $this->less = new lessc;
+        $this->less = new Compiler;
         $this->less->setFormatter('compressed');
     }
 }

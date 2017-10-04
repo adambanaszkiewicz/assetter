@@ -8,10 +8,10 @@
  */
 namespace Requtize\Assetter\Plugin;
 
-use Leafo\ScssPhp\Compiler;
 use Leafo\ScssPhp\Formatter\Crunched;
 use Requtize\Assetter\Assetter;
 use Requtize\Assetter\PluginInterface;
+use Requtize\Assetter\Plugin\Leafo\ScssPhp\Compiler;
 
 class LeafoScssPhpPlugin implements PluginInterface
 {
@@ -52,17 +52,13 @@ class LeafoScssPhpPlugin implements PluginInterface
         $filepathRoot = $this->filesRoot.$filepath;
         $filepathNew  = str_replace('.scss', '.css', $filepath);
 
-        if($this->freshFile->isFresh($filepathRoot) === false)
+        if($this->freshFile->isFresh($filepathRoot))
         {
             $this->preparePlugin();
 
-            $this->scss->addImportPath(function($path) use ($filepath) {
-                $path = pathinfo($this->filesRoot.$filepath, PATHINFO_DIRNAME).'/'.$path;
+            $css = $this->scss->compileFile($filepathRoot);
 
-                return is_file($path) ? $path : null;
-            });
-
-            $css = $this->scss->compile(file_get_contents($filepathRoot));
+            $this->freshFile->setRelatedFiles($filepathRoot, array_keys($this->scss->getParsedFiles()));
 
             file_put_contents($this->filesRoot.$filepathNew, $css);
         }
@@ -76,6 +72,7 @@ class LeafoScssPhpPlugin implements PluginInterface
             return;
 
         $this->scss = new Compiler;
+        $this->scss->setLineNumberStyle(Compiler::LINE_COMMENTS);
         $this->scss->setFormatter(Crunched::class);
     }
 }
