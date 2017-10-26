@@ -3,6 +3,24 @@ Assets manager for PHP. Allow manage CSS and JS files in website and its depende
 
 Assetter now allows You to load Your SASS and LESS styles directly to Your project, and compile them just-in-time and load compiled styles in the browser. You have to only register any of built-in plugins to enable this functionality (and install suggested composer packages).
 
+## Installation
+
+### Via composer.json
+
+```json
+{
+    "require": {
+        "requtize/assetter": "^1.0.0"
+    }
+}
+```
+
+### Via Composer CLI
+
+```cli
+composer require requtize/assetter:^1.0.0
+```
+
 ## Table of contents
 * [Basics](#basics)
     1. [Define collection array](#1-define-collection-array)
