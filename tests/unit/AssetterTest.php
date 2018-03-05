@@ -310,6 +310,21 @@ class AssetterTest extends PHPUnit_Framework_TestCase
                       ."\n".'<link rel="stylesheet" type="text/css" href="/five.css" />'
                       ."\n", $assetter->all());
     }
+    
+    /**
+     * @dataProvider providerInitArrayNine
+     */
+    public function testAssetsMultiple($data)
+    {
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
+        $assetter->load('two')->load('two')->load('five');
+
+        $this->assertEquals('<link rel="stylesheet" type="text/css" href="/one.css" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/two.css" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/five.css" />'
+                      ."\n", $assetter->all());
+    }
 
     public static function providerInitArrayNine()
     {

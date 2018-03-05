@@ -503,7 +503,7 @@ class Assetter
             }
         }
 
-        return $result;
+        return $this->arrayUnique($result);
     }
 
     protected function transformListToLinkHtmlNodes(array $list)
@@ -545,7 +545,7 @@ class Assetter
             }
         }
 
-        return $result;
+        return $this->arrayUnique($result);
     }
 
     protected function transformListToScriptHtmlNodes(array $list)
@@ -561,6 +561,27 @@ class Assetter
         }
 
         return $result;
+    }
+
+    protected function arrayUnique(array $list)
+    {
+        $filesLoaded = [];
+
+        foreach($list as $gk => $group)
+        {
+            foreach($group['files'] as $fk => $file)
+            {
+                if(in_array($file['file'], $filesLoaded))
+                {
+                    unset($list[$gk]['files'][$fk]);
+                    continue;
+                }
+
+                $filesLoaded[] = $file['file'];
+            }
+        }
+
+        return $list;
     }
 
     protected function sort()
