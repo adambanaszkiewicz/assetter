@@ -5,7 +5,7 @@
     "keywords": ["asset","assets","files manager","manager"],
     "homepage": "https://github.com/requtize/assetter",
     "license": "MIT",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "authors": [
         {
             "name": "Adam Banaszkiewicz",
@@ -14,12 +14,12 @@
         }
     ],
     "require": {
-        "php": "~5.5 || ^7.0",
-        "requtize/fresh-file": "^0.2"
+        "php": "~5.5 || ~7.0",
+        "requtize/fresh-file": "~0.2"
     },
     "require-dev": {
-        "leafo/scssphp": "^0.6",
-        "leafo/lessphp": "^0.5"
+        "leafo/scssphp": "~0.6",
+        "leafo/lessphp": "~0.5"
     },
     "suggest": {
         "leafo/scssphp": "Allows write styles in SASS and compile files directly to CSS just-in-time.",
