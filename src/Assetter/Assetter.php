@@ -510,6 +510,8 @@ class Assetter
     {
         $result = [];
 
+        list($list) = $this->fireEvent('transform-list-to-html', [ & $list ]);
+
         foreach($list as $group)
         {
             foreach($group['files'] as $file)

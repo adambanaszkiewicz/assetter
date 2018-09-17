@@ -1,6 +1,7 @@
 <?php
 
 use Requtize\Assetter\Assetter;
+use Requtize\Assetter\PluginInterface;
 use Requtize\FreshFile\FreshFile;
 
 class AssetterTest extends PHPUnit_Framework_TestCase
@@ -326,6 +327,23 @@ class AssetterTest extends PHPUnit_Framework_TestCase
                       ."\n", $assetter->all());
     }
 
+    /**
+     * @dataProvider providerInitArrayNine
+     */
+    public function testModifyLinksBeforeCompile($data)
+    {
+        $assetter = $this->createAssetterObject();
+        $assetter->registerPlugin(new ModifyLinksBeforeCompilePlugin);
+
+        $assetter->setCollection($data);
+        $assetter->load('two')->load('two')->load('five');
+
+        $this->assertEquals('<link rel="stylesheet" type="text/css" href="/one.min.css" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/two.min.css" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/five.min.css" />'
+                      ."\n", $assetter->all());
+    }
+
     public static function providerInitArrayNine()
     {
         return [
@@ -361,3 +379,22 @@ class AssetterTest extends PHPUnit_Framework_TestCase
         ];
     }
 }
+
+class ModifyLinksBeforeCompilePlugin implements PluginInterface
+{
+    public function register(Assetter $assetter)
+    {
+        $assetter->listenEvent('transform-list-to-html', [ $this, 'replaceLinksToMinified' ]);
+    }
+
+    public function replaceLinksToMinified(array & $list)
+    {
+        foreach($list as $key => $files)
+        {
+            foreach($files['files'] as $fkey => $file)
+            {
+                $list[$key]['files'][$fkey]['file'] = str_replace('.css', '.min.css', $list[$key]['files'][$fkey]['file']);
+            }
+        }
+    }
+} 
