@@ -345,6 +345,17 @@ class Assetter
     }
 
     /**
+     * Clears loaded list.
+     * @return self
+     */
+    public function clearLoaded()
+    {
+        $this->loaded = [];
+
+        return $this;
+    }
+
+    /**
      * Check if given library name was already loaded.
      * @param  string $name Name of library/asset.
      * @return boolean
