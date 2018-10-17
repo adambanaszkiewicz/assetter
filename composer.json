@@ -5,7 +5,7 @@
     "keywords": ["asset","assets","files manager","manager"],
     "homepage": "https://github.com/requtize/assetter",
     "license": "MIT",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "authors": [
         {
             "name": "Adam Banaszkiewicz",
