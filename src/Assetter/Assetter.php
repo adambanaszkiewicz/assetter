@@ -240,9 +240,9 @@ class Assetter
         $files = [];
 
         if(isset($data['files']['js']) && is_array($data['files']['js']))
-            $files['js'] = $this->resolveFilesList($data['files']['js']);
+            $files['js'] = $this->resolveFilesList($data['files']['js'], isset($data['revision']) ? $data['revision'] : null);
         if(isset($data['files']['css']) && is_array($data['files']['css']))
-            $files['css'] = $this->resolveFilesList($data['files']['css']);
+            $files['css'] = $this->resolveFilesList($data['files']['css'], isset($data['revision']) ? $data['revision'] : null);
 
         $this->collection[] = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
@@ -314,9 +314,9 @@ class Assetter
         $files = [];
 
         if(isset($data['files']['js']) && is_array($data['files']['js']))
-            $files['js'] = $this->resolveFilesList($data['files']['js']);
+            $files['js'] = $this->resolveFilesList($data['files']['js'], isset($data['revision']) ? $data['revision'] : null);
         if(isset($data['files']['css']) && is_array($data['files']['css']))
-            $files['css'] = $this->resolveFilesList($data['files']['css']);
+            $files['css'] = $this->resolveFilesList($data['files']['css'], isset($data['revision']) ? $data['revision'] : null);
 
         $item = [
             'order'    => isset($data['order']) ? $data['order'] : 0,
@@ -432,7 +432,7 @@ class Assetter
         return implode("\n", $jsList);
     }
 
-    protected function resolveFilesList(array $files)
+    protected function resolveFilesList(array $files, $revision = null)
     {
         $result = [];
 
@@ -442,14 +442,14 @@ class Assetter
             {
                 $result[] = [
                     'file'     => $val,
-                    'revision' => null
+                    'revision' => $revision
                 ];
             }
             elseif(is_numeric($key) && is_array($val))
             {
                 $result[] = [
                     'file'     => isset($val['file']) ? $val['file'] : null,
-                    'revision' => isset($val['revision']) ? $val['revision'] : null
+                    'revision' => isset($val['revision']) ? $val['revision'] : $revision
                 ];
             }
             elseif(is_string($key) && is_numeric($val))

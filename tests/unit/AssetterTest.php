@@ -378,6 +378,35 @@ class AssetterTest extends PHPUnit_Framework_TestCase
             ]
         ];
     }
+
+    public function testRevisionInCollection()
+    {
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection([
+            [
+                'name'  => 'one',
+                'revision' => null,
+                'files' => [ 'css' => [ '/one.css' ] ]
+            ],
+            [
+                'name'  => 'two',
+                'revision' => 123,
+                'files' => [ 'css' => [ '/two.css' ] ]
+            ],
+            [
+                'name'  => 'three',
+                'revision' => '1.23.4',
+                'files' => [ 'css' => [ '/three.css' ] ]
+            ]
+        ]);
+
+        $assetter->load('one')->load('two')->load('three');
+
+        $this->assertEquals('<link rel="stylesheet" type="text/css" href="/one.css" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/three.css?rev=1.23.4" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/two.css?rev=123" />'
+                      ."\n", $assetter->all());
+    }
 }
 
 class ModifyLinksBeforeCompilePlugin implements PluginInterface
