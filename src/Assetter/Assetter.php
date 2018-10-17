@@ -225,6 +225,8 @@ class Assetter
     {
         list($collection) = $this->fireEvent('collection.set', [ $collection ]);
 
+        $this->collection = [];
+
         foreach($collection as $asset)
         {
             $this->appendToCollection($asset);
