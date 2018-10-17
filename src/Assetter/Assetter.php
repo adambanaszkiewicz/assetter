@@ -31,14 +31,6 @@ class Assetter
     protected $collection = [];
 
     /**
-     * Stores global revision for all files.
-     * Revision number is added automatically to all files as GET aparameter.
-     * Allows refresh files from cache in browsers.
-     * @var integer
-     */
-    protected $revision = 0;
-
-    /**
      * Stores name of default group for library.
      * @var string
      */
