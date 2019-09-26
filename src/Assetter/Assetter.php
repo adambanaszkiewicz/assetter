@@ -521,7 +521,17 @@ class Assetter
         {
             foreach($group['files'] as $file)
             {
-                $result[] = '<link rel="stylesheet" type="text/css" href="'.$file['file'].($file['revision'] ? '?rev='.$file['revision'] : '').'" />';
+                $link = $file['file'];
+
+                if($file['revision'])
+                {
+                    if(strpos($file['file'], '?') === false)
+                        $link .= '?rev='.$file['revision'];
+                    else
+                        $link .= '&rev='.$file['revision'];
+                }
+
+                $result[] = '<link rel="stylesheet" type="text/css" href="'.$link.'" />';
             }
         }
 
@@ -563,7 +573,17 @@ class Assetter
         {
             foreach($group['files'] as $file)
             {
-                $result[] = '<script src="'.$file['file'].($file['revision'] ? '?rev='.$file['revision'] : '').'"></script>';
+                $link = $file['file'];
+
+                if($file['revision'])
+                {
+                    if(strpos($file['file'], '?') === false)
+                        $link .= '?rev='.$file['revision'];
+                    else
+                        $link .= '&rev='.$file['revision'];
+                }
+
+                $result[] = '<script src="'.$link.'"></script>';
             }
         }
 

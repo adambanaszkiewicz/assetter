@@ -1,10 +1,11 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
 use Requtize\Assetter\Assetter;
 use Requtize\Assetter\PluginInterface;
 use Requtize\FreshFile\FreshFile;
 
-class AssetterTest extends PHPUnit_Framework_TestCase
+class AssetterTest extends TestCase
 {
     protected function createAssetterObject()
     {
@@ -406,6 +407,42 @@ class AssetterTest extends PHPUnit_Framework_TestCase
                       ."\n".'<link rel="stylesheet" type="text/css" href="/three.css?rev=1.23.4" />'
                       ."\n".'<link rel="stylesheet" type="text/css" href="/two.css?rev=123" />'
                       ."\n", $assetter->all());
+    }
+
+    public function testLoadExternalWithQueryInLinkAndRevision()
+    {
+        $data = [
+            [
+                'name'  => 'external',
+                'files' => [ 'js' => [ 'https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js?some_modificator=153457890265' ], 'css' => [ 'https://fonts.googleapis.com/css?family=Poppins:400,400i,600,600i&amp;subset=latin-ext' ] ],
+                'revision' => 123456
+            ]
+        ];
+
+        $assetter = $this->createAssetterObject();
+        $assetter->setCollection($data);
+
+        // Here, every asset should not be loaded
+        $this->assertEquals(false, $assetter->alreadyLoaded('external'));
+        $this->assertEquals(false, $assetter->alreadyLoaded('appended-asset'));
+
+        // Load first asset, and shoud be loaded only one asset.
+        $assetter->load('external');
+        $this->assertEquals(true, $assetter->alreadyLoaded('external'));
+        $this->assertEquals(false, $assetter->alreadyLoaded('appended-asset'));
+
+        // Load external asset, and shoud be existed.
+        $assetter->load([
+            'name' => 'appended-asset',
+            'files' => []
+        ]);
+        $this->assertEquals(true, $assetter->alreadyLoaded('external'));
+        $this->assertEquals(true, $assetter->alreadyLoaded('appended-asset'));
+
+        $this->assertEquals(
+            '<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Poppins:400,400i,600,600i&amp;subset=latin-ext&rev=123456" />'
+            ."\n".'<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js?some_modificator=153457890265&rev=123456"></script>',
+            $assetter->all());
     }
 }
 

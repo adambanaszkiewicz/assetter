@@ -1,9 +1,10 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
 use Requtize\Assetter\Assetter;
 use Requtize\FreshFile\FreshFile;
 
-class LeafoLessCompilatorTest extends PHPUnit_Framework_TestCase
+class LeafoLessCompilatorTest extends TestCase
 {
     protected function createAssetterObject()
     {

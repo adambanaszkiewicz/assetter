@@ -1,11 +1,12 @@
 <?php
 
+use PHPUnit\Framework\TestCase;
 use Leafo\ScssPhp\Compiler;
 use Leafo\ScssPhp\Formatter\Crunched;
 use Requtize\Assetter\Assetter;
 use Requtize\FreshFile\FreshFile;
 
-class LeafoScssCompilatorTest extends PHPUnit_Framework_TestCase
+class LeafoScssCompilatorTest extends TestCase
 {
     protected function createAssetterObject()
     {
