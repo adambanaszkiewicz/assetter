@@ -4,3 +4,4 @@ composer.lock
 cache
 .fresh-file
 *~
+.phpunit.result.cache

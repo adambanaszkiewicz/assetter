@@ -19,7 +19,8 @@
     },
     "require-dev": {
         "leafo/scssphp": "~0.6",
-        "leafo/lessphp": "~0.5"
+        "leafo/lessphp": "~0.5",
+        "phpunit/phpunit": "~8.3"
     },
     "suggest": {
         "leafo/scssphp": "Allows write styles in SASS and compile files directly to CSS just-in-time.",
