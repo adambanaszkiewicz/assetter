@@ -1,14 +1,15 @@
 <?php
+
+declare(strict_types=1);
+
 /**
- * Copyright (c) 2016 - 2018 by Adam Banaszkiewicz
- *
  * @license   MIT License
- * @copyright Copyright (c) 2016 - 2018, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
 namespace Requtize\Assetter;
 
-use Requtize\FreshFile\FreshFile;
+use Requtize\Assetter\Exception\MissingAssetException;
 
 /**
  * Asseter class. Manage assets (CSS and JS) for website, and it's
@@ -17,602 +18,376 @@ use Requtize\FreshFile\FreshFile;
  *
  * @author Adam Banaszkiewicz https://github.com/requtize
  */
-class Assetter
+class Assetter implements AssetterInterface
 {
     /**
-     * @var Requtize\FreshFile\FreshFile
+     * @var CollectionInterface
      */
-    protected $freshFile;
+    protected $collection;
 
     /**
-     * Stores collection of libraries to load.
+     * List of names that was required directly using require() method.
+     *
      * @var array
      */
-    protected $collection = [];
+    protected $required = [];
 
     /**
-     * Stores name of default group for library.
-     * @var string
-     */
-    protected $defaultGroup = 'def';
-
-    /**
-     * Loaded libraries.
+     * List of names that was rendered already. These names are
+     * used for the second and next builds, to not load the same
+     * assets multiple times.
+     *
      * @var array
      */
-    protected $loaded = [];
+    protected $rendered = [];
 
     /**
-     * Store namespaces, which will be replaces when some asset will be loaded.
-     * @var array
-     */
-    protected $namespaces = [];
-
-    /**
-     * Store events listeners.
      * @var array
      */
     protected $eventListeners = [];
 
     /**
-     * List of registered plugins.
      * @var array
      */
     protected $plugins = [];
 
     /**
-     * Constructor.
-     * @param FreshFile $freshFile
+     * @var array
      */
-    public function __construct(FreshFile $freshFile)
+    protected $namespaces = [];
+
+    /**
+     * @param CollectionInterface|null $collection
+     */
+    public function __construct(CollectionInterface $collection = null)
     {
-        $this->freshFile = $freshFile;
+        $this->collection = $collection ?? new Collection();
     }
 
     /**
-     * While cloning self, clears loaded libraries.
-     * @return void
+     * @inheritDoc
      */
-    public function __clone()
+    public function registerNamespace(string $name, string $path): void
     {
-        $this->loaded = [];
+        $this->namespaces[$name] = $path;
     }
 
     /**
-     * Return clone of this object, without loaded libraries in it.
-     * @return Cloned self object.
+     * {@inheritdoc}
      */
-    public function doClone()
+    public function unregisterNamespace(string $name): void
     {
-        return clone $this;
+        unset($this->namespaces[$name]);
     }
 
     /**
-     * Returns FreshFile object.
-     * @return FreshFile
+     * {@inheritdoc}
      */
-    public function getFreshFile()
+    public function clearNamespaces(): void
     {
-        return $this->freshFile;
+        $this->namespaces = [];
     }
 
     /**
-     * Registers plugin and add to list.
-     * @param  PluginInterface $plugin PluginInterface object.
-     * @return self
+     * {@inheritdoc}
      */
-    public function registerPlugin(PluginInterface $plugin)
+    public function getNamespaces(): iterable
+    {
+        return $this->namespaces;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function registerPlugin(PluginInterface $plugin): void
     {
         $plugin->register($this);
 
         $this->plugins[] = $plugin;
-
-        return $this;
     }
 
-    public function getRegisteredPlugins()
+    /**
+     * {@inheritdoc}
+     */
+    public function getRegisteredPlugins(): iterable
     {
         return $this->plugins;
     }
 
     /**
-     * Attaches callable method/function to given event name.
-     * @param  string   $event    Event name.
-     * @param  callable $callable Callback that is fired when event is triggered.
-     * @return self
+     * {@inheritdoc}
      */
-    public function listenEvent($event, $callable)
+    public function listenEvent(string $event, callable $callable): void
     {
         $this->eventListeners[$event][] = $callable;
-
-        return $this;
     }
 
     /**
-     * Fires event with specified arguments. Arguments were passed
-     * as next params of function.
-     * @param  string $event Event name to fire.
-     * @param  array  $args  Array fo args.
-     * @return array  Modified arguments.
+     * {@inheritdoc}
      */
-    public function fireEvent($event, array $args = [])
+    public function fireEvent($event, array $args = []): array
     {
-        if(isset($this->eventListeners[$event]) === false)
+        if (isset($this->eventListeners[$event]) === false) {
             return $args;
+        }
 
-        foreach($this->eventListeners[$event] as $listener)
-            call_user_func_array($listener, $args);
+        foreach ($this->eventListeners[$event] as $listener) {
+            \call_user_func_array($listener, $args);
+        }
 
         return $args;
     }
 
     /**
-     * Register namespace.
-     * @param  string $ns  Namespace name.
-     * @param  string $def Namespace path.
-     * @return self
+     * {@inheritdoc}
      */
-    public function registerNamespace($ns, $def)
-    {
-        list($ns, $def) = $this->fireEvent('namespace.register', [ $ns, $def ]);
-
-        $this->namespaces[$ns] = $def;
-
-        return $this;
-    }
-
-    /**
-     * Unregister namespace.
-     * @param  string $ns namespace name.
-     * @return self
-     */
-    public function unregisterNamespace($ns)
-    {
-        list($ns) = $this->fireEvent('namespace.unregister', [ $ns ]);
-
-        unset($this->namespaces[$ns]);
-
-        return $this;
-    }
-
-    /**
-     * Gets current default global group for files that have not
-     * defined in collection, or in append() array.
-     * @return string
-     */
-    public function getDefaultGroup()
-    {
-        return $this->defaultGroup;
-    }
-
-    /**
-     * Sets default group for files.
-     * @param string $defaultGroup
-     * @return self
-     */
-    public function setDefaultGroup($defaultGroup)
-    {
-        list($defaultGroup) = $this->fireEvent('default-group.set', [ $defaultGroup ]);
-
-        $this->defaultGroup = $defaultGroup;
-
-        return $this;
-    }
-
-    /**
-     * Returns full collection of registered assets.
-     * @return array
-     */
-    public function getCollection()
+    public function getCollection(): CollectionInterface
     {
         return $this->collection;
     }
 
     /**
-     * Sets collection of assets.
-     * @param  array $collection
-     * @return self
+     * {@inheritdoc}
      */
-    public function setCollection(array $collection)
+    public function setCollection(CollectionInterface $collection): void
     {
-        list($collection) = $this->fireEvent('collection.set', [ $collection ]);
-
-        $this->collection = [];
-
-        foreach($collection as $asset)
-        {
-            $this->appendToCollection($asset);
-        }
-
-        return $this;
+        [$this->collection] = $this->fireEvent('collection.set', [$collection]);
     }
 
     /**
-     * Append asset array to collection. before this, apply required
-     * indexes if not exists.
-     * @param  array $asset $array with asset data.
-     * @return self
+     * {@inheritdoc}
      */
-    public function appendToCollection(array $data)
+    public function getRequired(): array
     {
-        list($data) = $this->fireEvent('append-to-collection', [ $data ]);
-
-        $files = [];
-
-        if(isset($data['files']['js']) && is_array($data['files']['js']))
-            $files['js'] = $this->resolveFilesList($data['files']['js'], isset($data['revision']) ? $data['revision'] : null);
-        if(isset($data['files']['css']) && is_array($data['files']['css']))
-            $files['css'] = $this->resolveFilesList($data['files']['css'], isset($data['revision']) ? $data['revision'] : null);
-
-        $this->collection[] = [
-            'order'    => isset($data['order']) ? $data['order'] : 0,
-            'name'     => isset($data['name'])  ? $data['name']  : uniqid(),
-            'files'    => $files,
-            'group'    => isset($data['group']) ? $data['group'] : $this->defaultGroup,
-            'require'  => isset($data['require']) ? $data['require'] : []
-        ];
-
-        return $this;
+        return $this->required;
     }
 
     /**
-     * Loads assets from given name.
-     * @param  string $name Name of library/asset.
-     * @return self
+     * {@inheritdoc}
      */
-    public function load($data)
+    public function require(...$names): void
     {
-        list($data) = $this->fireEvent('load', [ $data ]);
-
-        if(is_array($data))
-        {
-            $this->loadFromArray($data);
-        }
-        else
-        {
-            $this->loadFromCollection($data);
+        // Merge multiple arrays
+        if (\is_array($names[0])) {
+            $names = array_merge(...$names);
         }
 
-        return $this;
-    }
+        [$names] = $this->fireEvent('require', [$names]);
 
-    /**
-     * Loads given asset (by name) from defined collection.
-     * @param  string $name Asset name.
-     * @return self
-     */
-    public function loadFromCollection($name)
-    {
-        if($this->alreadyLoaded($name))
-        {
-            return $this;
-        }
-
-        list($name) = $this->fireEvent('load-from-collection', [ $name ]);
-
-        foreach($this->collection as $item)
-        {
-            if($item['name'] === $name)
-            {
-                $this->loadFromArray($item);
+        foreach ($names as $name) {
+            if (isset($this->collection[$name]) === false) {
+                throw MissingAssetException::fromName($name, $this->findAlternatives($name));
             }
+
+            if (\in_array($name, $this->required, true)) {
+                continue;
+            }
+
+            $this->required[] = $name;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function unrequire(...$names): void
+    {
+        [$names] = $this->fireEvent('unrequire', [$names]);
+
+        $this->required = array_values(array_diff($this->required, $names));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function build(string $group = '*'): RendererInterface
+    {
+        $required = $this->required;
+        $included = $this->collectIncluded($required);
+        $required = $this->recursiveRequire($required, $included);
+        $required = $this->collect($required);
+
+        $toRender = $this->filterByGroup($required, $group);
+        $toRender = $this->removeRendered($toRender);
+
+        $this->rendered = array_merge($this->rendered, array_keys($toRender));
+
+        $renderer = new Renderer($toRender);
+
+        [$renderer] = $this->fireEvent('build', [& $renderer]);
+
+        return $renderer;
+    }
+
+    /**
+     * @param array $names
+     *
+     * @return array
+     */
+    private function collect(array $names): array
+    {
+        $payload = [];
+
+        foreach ($names as $name) {
+            $asset = $this->collection[$name];
+
+            $payload[$name] = [
+                'priority' => $asset['priority'],
+                'name'     => $name,
+                'scripts'  => $this->applyNamespaces($asset['scripts']),
+                'styles'   => $this->applyNamespaces($asset['styles']),
+                'group'    => $asset['group'],
+                'included' => $asset['included'],
+            ];
         }
 
-        return $this;
+        uasort($payload, function ($a, $b) {
+            return $b['priority'] <=> $a['priority'];
+        });
+
+        [$payload] = $this->fireEvent('collect', [& $payload]);
+
+        return $payload;
     }
 
     /**
-     * Load asset by given array. Apply registered namespaces for all
-     * files' paths.
-     * @param  array  $item Asset data array.
-     * @return self
+     * @param array $files
+     *
+     * @return array
      */
-    public function loadFromArray(array $data)
+    protected function applyNamespaces(array $files): array
     {
-        list($data) = $this->fireEvent('load-from-array', [ $data ]);
-
-        $files = [];
-
-        if(isset($data['files']['js']) && is_array($data['files']['js']))
-            $files['js'] = $this->resolveFilesList($data['files']['js'], isset($data['revision']) ? $data['revision'] : null);
-        if(isset($data['files']['css']) && is_array($data['files']['css']))
-            $files['css'] = $this->resolveFilesList($data['files']['css'], isset($data['revision']) ? $data['revision'] : null);
-
-        $item = [
-            'order'    => isset($data['order']) ? $data['order'] : 0,
-            'name'     => isset($data['name']) ? $data['name'] : uniqid(),
-            'files'    => $files,
-            'group'    => isset($data['group']) ? $data['group'] : $this->defaultGroup,
-            'require'  => isset($data['require']) ? $data['require'] : []
-        ];
-
-        if(isset($item['files']['js']) && is_array($item['files']['js']))
-            $item['files']['js'] = $this->applyNamespaces($item['files']['js']);
-        if(isset($item['files']['css']) && is_array($item['files']['css']))
-            $item['files']['css'] = $this->applyNamespaces($item['files']['css']);
-
-        $this->loaded[] = $item;
-
-        if(isset($item['require']) && is_array($item['require']))
-        {
-            foreach($item['require'] as $name)
-            {
-                $this->loadFromCollection($name);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Clears loaded list.
-     * @return self
-     */
-    public function clearLoaded()
-    {
-        $this->loaded = [];
-
-        return $this;
-    }
-
-    /**
-     * Check if given library name was already loaded.
-     * @param  string $name Name of library/asset.
-     * @return boolean
-     */
-    public function alreadyLoaded($name)
-    {
-        foreach($this->loaded as $item)
-        {
-            if($item['name'] === $name)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns both CSS and JS tags from given group name.
-     * If group name is asterisk (*), will return from all loaded groups.
-     * @param  string $group Group name.
-     * @return string HTML tags as string.
-     */
-    public function all($group = '*')
-    {
-        $this->sort();
-
-        $cssList = $this->getLoadedCssList($group);
-        $jsList  = $this->getLoadedJsList($group);
-
-        list($cssList, $jsList) = $this->fireEvent('load.all', [ & $cssList, & $jsList ]);
-
-        $cssList = $this->transformListToLinkHtmlNodes($cssList);
-        $jsList  = $this->transformListToScriptHtmlNodes($jsList);
-
-        return implode("\n", $cssList)."\n".implode("\n", $jsList);
-    }
-
-    /**
-     * Returns CSS tags from given group name.
-     * If group name is asterisk (*), will return from all loaded groups.
-     * @param  string $group Group name.
-     * @return string HTML tags as string.
-     */
-    public function css($group = '*')
-    {
-        $this->sort();
-
-        $cssList = $this->getLoadedCssList($group);
-
-        list($cssList) = $this->fireEvent('load.css', [ & $cssList ]);
-
-        $cssList = $this->transformListToLinkHtmlNodes($cssList);
-
-        return implode("\n", $cssList);
-    }
-
-    /**
-     * Returns JS tags from given group name.
-     * If group name is asterisk (*), will return from all loaded groups.
-     * @param  string $group Group name.
-     * @return string HTML tags as string.
-     */
-    public function js($group = '*')
-    {
-        $this->sort();
-
-        $jsList = $this->getLoadedJsList($group);
-
-        list($jsList) = $this->fireEvent('load.js', [ & $jsList ]);
-
-        $jsList = $this->transformListToScriptHtmlNodes($jsList);
-
-        return implode("\n", $jsList);
-    }
-
-    protected function resolveFilesList(array $files, $revision = null)
-    {
-        $result = [];
-
-        foreach($files as $key => $val)
-        {
-            if(is_numeric($key) && is_string($val))
-            {
-                $result[] = [
-                    'file'     => $val,
-                    'revision' => $revision
-                ];
-            }
-            elseif(is_numeric($key) && is_array($val))
-            {
-                $result[] = [
-                    'file'     => isset($val['file']) ? $val['file'] : null,
-                    'revision' => isset($val['revision']) ? $val['revision'] : $revision
-                ];
-            }
-            elseif(is_string($key) && is_numeric($val))
-            {
-                $result[] = [
-                    'file'     => $key,
-                    'revision' => $val
-                ];
-            }
-        }
-
-        return $result;
-    }
-
-    protected function applyNamespaces(array $files)
-    {
-        foreach($files as $key => $file)
-        {
+        foreach ($files as $key => $file) {
             $files[$key] = str_replace(array_keys($this->namespaces), array_values($this->namespaces), $file);
         }
 
         return $files;
     }
 
-    protected function resolveGroup($group, $type)
+    /**
+     * @param array $required
+     * @param string $group
+     *
+     * @return array
+     */
+    private function filterByGroup(array $required, string $group): array
     {
-        if($group == null)
-        {
-            return $this->defaultGroup;
+        $group = $this->resolveGroup($group);
+
+        $result = [];
+
+        foreach ($required as $name => $item) {
+            if ($group !== '*' && $item['group'] !== $group) {
+                continue;
+            }
+
+            $result[$name] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $group
+     *
+     * @return string
+     */
+    protected function resolveGroup($group): string
+    {
+        if ($group === null) {
+            return $this->collection->getDefaultGroup();
         }
 
         return $group;
     }
 
-    protected function getLoadedCssList($group)
+    /**
+     * @param array $required
+     *
+     * @return array
+     */
+    private function removeRendered(array $required): array
     {
-        $group = $this->resolveGroup($group, 'css');
-
-        $result = [];
-
-        foreach($this->loaded as $item)
-        {
-            if($group != '*')
-            {
-                if($item['group'] != $group)
-                {
-                    continue;
-                }
-            }
-
-            if(isset($item['files']['css']) && is_array($item['files']['css']))
-            {
-                $result[] = [
-                    'files' => $item['files']['css']
-                ];
+        foreach ($required as $name => $item) {
+            if (\in_array($name, $this->rendered, true)) {
+                unset($required[$name]);
             }
         }
 
-        return $this->arrayUnique($result);
+        return $required;
     }
 
-    protected function transformListToLinkHtmlNodes(array $list)
+    /**
+     * @param array $require
+     *
+     * @return array
+     *
+     * @throws MissingAssetException
+     */
+    private function recursiveRequire(array $require, array $skip): array
     {
-        $result = [];
+        $newRequired = [];
 
-        list($list) = $this->fireEvent('transform-list-to-html', [ & $list ]);
-
-        foreach($list as $group)
-        {
-            foreach($group['files'] as $file)
-            {
-                $link = $file['file'];
-
-                if($file['revision'])
-                {
-                    if(strpos($file['file'], '?') === false)
-                        $link .= '?rev='.$file['revision'];
-                    else
-                        $link .= '&rev='.$file['revision'];
-                }
-
-                $result[] = '<link rel="stylesheet" type="text/css" href="'.$link.'" />';
-            }
-        }
-
-        return $result;
-    }
-
-    protected function getLoadedJsList($group)
-    {
-        $group = $this->resolveGroup($group, 'js');
-
-        $result = [];
-
-        foreach($this->loaded as $item)
-        {
-            if($group != '*')
-            {
-                if($item['group'] != $group)
-                {
-                    continue;
-                }
+        foreach ($require as $sourceName) {
+            if (\in_array($sourceName, $skip, true)) {
+                continue;
             }
 
-            if(isset($item['files']['js']) && is_array($item['files']['js']))
-            {
-                $result[] = [
-                    'files' => $item['files']['js']
-                ];
+            if (isset($this->collection[$sourceName]) === false) {
+                throw MissingAssetException::fromName($sourceName, $this->findAlternatives($sourceName));
             }
-        }
 
-        return $this->arrayUnique($result);
-    }
-
-    protected function transformListToScriptHtmlNodes(array $list)
-    {
-        $result = [];
-
-        foreach($list as $group)
-        {
-            foreach($group['files'] as $file)
-            {
-                $link = $file['file'];
-
-                if($file['revision'])
-                {
-                    if(strpos($file['file'], '?') === false)
-                        $link .= '?rev='.$file['revision'];
-                    else
-                        $link .= '&rev='.$file['revision'];
-                }
-
-                $result[] = '<script src="'.$link.'"></script>';
-            }
-        }
-
-        return $result;
-    }
-
-    protected function arrayUnique(array $list)
-    {
-        $filesLoaded = [];
-
-        foreach($list as $gk => $group)
-        {
-            foreach($group['files'] as $fk => $file)
-            {
-                if(in_array($file['file'], $filesLoaded))
-                {
-                    unset($list[$gk]['files'][$fk]);
+            foreach ($this->collection[$sourceName]['require'] as $name) {
+                if (\in_array($name, $skip, true)) {
                     continue;
                 }
 
-                $filesLoaded[] = $file['file'];
+                if (\in_array($name, $require, true)) {
+                    continue;
+                }
+
+                if (isset($this->collection[$name])) {
+                    $newRequired[] = $name;
+                } else {
+                    throw MissingAssetException::fromNameAsDependencyOf($name, $sourceName, $this->findAlternatives($name));
+                }
             }
         }
 
-        return $list;
+        if ($newRequired === []) {
+            return $require;
+        }
+
+        $require = array_unique(array_merge($newRequired, $require));
+
+        return $this->recursiveRequire($require, $skip);
     }
 
-    protected function sort()
+    private function collectIncluded(array $require): array
     {
-        array_multisort($this->loaded);
+        $included = [];
+
+        foreach ($require as $name) {
+            $included[] = $this->collection[$name]['included'];
+        }
+
+        $included = array_merge(...$included);
+
+        return $included;
+    }
+
+    private function findAlternatives(string $name): array
+    {
+        $similar = [];
+
+        foreach ($this->collection->getNames() as $alternative) {
+            similar_text($name, $alternative, $percent);
+
+            if ($percent > 70) {
+                $similar[] = $alternative;
+            }
+        }
+
+        return $similar;
     }
 }

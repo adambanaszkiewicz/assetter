@@ -1,10 +1,19 @@
 <?php
 
+/**
+ * @license   MIT License
+ * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
+ * @link      https://github.com/requtize/assetter
+ */
+namespace Requtize\Assetter\Tests\Unit;
+
 use PHPUnit\Framework\TestCase;
+use Leafo\ScssPhp\Compiler;
+use Leafo\ScssPhp\Formatter\Crunched;
 use Requtize\Assetter\Assetter;
 use Requtize\FreshFile\FreshFile;
 
-class LeafoLessCompilatorTest extends TestCase
+class LeafoScssCompilatorTest extends TestCase
 {
     protected function createAssetterObject()
     {
@@ -16,7 +25,7 @@ class LeafoLessCompilatorTest extends TestCase
             unlink($file);
 
         $assetter = new Assetter($ff);
-        $assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoLessPhpPlugin(__DIR__.'/resources'));
+        $assetter->registerPlugin(new \Requtize\Assetter\Plugin\LeafoScssPhpPlugin(__DIR__.'/resources'));
 
         return $assetter;
     }
@@ -44,7 +53,7 @@ class LeafoLessCompilatorTest extends TestCase
     protected function removeFiles()
     {
         $files = [
-            __DIR__.'/resources/less.css',
+            __DIR__.'/resources/scss.css',
             __DIR__.'/.fresh-file'
         ];
 
@@ -57,9 +66,9 @@ class LeafoLessCompilatorTest extends TestCase
         }
     }
 
-    public function testCheckFileExtensionChange()
+    public function __testCheckFileExtensionChange()
     {
-        if(class_exists('lessc') === false)
+        if(class_exists(Compiler::class) === false)
             return;
 
         $basepath = __DIR__.'/resources';
@@ -68,40 +77,40 @@ class LeafoLessCompilatorTest extends TestCase
         $assetter = $this->createAssetterObject();
         $this->setCollectionAndLoadIt($assetter);
 
-        $fmt = filemtime($basepath.'/less.less');
+        $fmt = filemtime($basepath.'/scss.scss');
 
-        // Detect if Plugin replaces the filepath of LESS file,
+        // Detect if Plugin replaces the filepath of SCSS file,
         // and leave rest of paths untouched.
         $this->assertEquals('<link rel="stylesheet" type="text/css" href="/css.css" />'
-                      ."\n".'<link rel="stylesheet" type="text/css" href="/less.css?rev='.$fmt.'" />'
-                      ."\n".'<link rel="stylesheet" type="text/css" href="/scss.scss" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/less.less" />'
+                      ."\n".'<link rel="stylesheet" type="text/css" href="/scss.css?rev='.$fmt.'" />'
                       ."\n", $assetter->all());
 
         $this->removeFiles();
     }
 
-    public function testCompiledFileExists()
+    public function __testCompiledFileExists()
     {
-        if(class_exists('lessc') === false)
+        if(class_exists(Compiler::class) === false)
             return;
 
         $basepath = __DIR__.'/resources';
         $this->removeFiles();
 
-        $this->assertFalse(is_file($basepath.'/less.css'));
+        $this->assertFalse(is_file($basepath.'/scss.css'));
 
         $assetter = $this->createAssetterObject();
         $this->setCollectionAndLoadIt($assetter);
         $assetter->all();
 
-        $this->assertTrue(is_file($basepath.'/less.css'));
+        $this->assertTrue(is_file($basepath.'/scss.css'));
 
         $this->removeFiles();
     }
 
-    public function testCompiledFileContent()
+    public function __testCompiledFileContent()
     {
-        if(class_exists('lessc') === false)
+        if(class_exists(Compiler::class) === false)
             return;
 
         $basepath = __DIR__.'/resources';
@@ -111,14 +120,14 @@ class LeafoLessCompilatorTest extends TestCase
         $this->setCollectionAndLoadIt($assetter);
         $assetter->all();
 
-        $this->assertEquals(file_get_contents($basepath.'/less.css.test'), file_get_contents($basepath.'/less.css'));
+        $this->assertEquals(file_get_contents($basepath.'/scss.css.test'), file_get_contents($basepath.'/scss.css'));
 
         $this->removeFiles();
     }
 
-    public function testCompiledFileCache()
+    public function __testCompiledFileCache()
     {
-        if(class_exists('lessc') === false)
+        if(class_exists(Compiler::class) === false)
             return;
 
         $basepath = __DIR__.'/resources';
@@ -130,8 +139,8 @@ class LeafoLessCompilatorTest extends TestCase
 
         $plugin = $assetter->getRegisteredPlugins()[0];
 
-        $lessFile = $basepath.'/less.less';
-        $cssFile  = $basepath.'/less.css';
+        $lessFile = $basepath.'/scss.scss';
+        $cssFile  = $basepath.'/scss.css';
 
         $this->assertTrue(is_file($lessFile));
         $this->assertTrue(is_file($cssFile));
@@ -145,12 +154,12 @@ class LeafoLessCompilatorTest extends TestCase
 
         // Touching should create file again.
         touch($lessFile, time() + 10);
-        $plugin->compile('/less.less');
+        $plugin->compile('/scss.scss');
 
         $this->assertTrue(is_file($cssFile));
 
         unlink($cssFile);
-        $plugin->compile('/less.less');
+        $plugin->compile('/scss.scss');
         $this->assertFalse(is_file($cssFile));
 
         $this->removeFiles();

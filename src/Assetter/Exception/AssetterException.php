@@ -7,15 +7,12 @@ declare(strict_types=1);
  * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
-namespace Requtize\Assetter;
+namespace Requtize\Assetter\Exception;
 
 /**
  * @author Adam Banaszkiewicz https://github.com/requtize
  */
-interface PluginInterface
+class AssetterException extends \Exception
 {
-    /**
-     * @param AssetterInterface $assetter
-     */
-    public function register(AssetterInterface $assetter): void;
+
 }
