@@ -371,6 +371,10 @@ class Assetter implements AssetterInterface
             $included[] = $this->collection[$name]['included'];
         }
 
+        if (empty($included)) {
+            return $included;
+        }
+
         $included = array_merge(...$included);
 
         return $included;
