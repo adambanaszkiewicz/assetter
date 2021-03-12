@@ -5,84 +5,57 @@
  */
 
 return [
-    /**
-     * Followed jQuery UI element have all indexes used by Assetter.
-     */
-    [
-        // Name of library. Required.
-        'name' => 'jquery',
-        // Ordering. Lower number = higher in loading list. Default order = 100
-        'order' => 0,
-        // Group belogs to.
-        'group' => 'top',
-        // Revision of this files. Overwrite default revision.
-        'revision' => 7,
-        // List of files. Required.
-        'files' => [
-            // JavaScript files
-            'js' => [
-                'http://code.jquery.com/ui/1.11.3/jquery-ui.min.js'
-            ],
-            // CSS files
-            'css' => [
-                'http://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css'
-            ]
+    'bootstrap' => [
+        'require' => [ 'bootstrap.body', 'bootstrap.head' ],
+    ],
+    'bootstrap.body' => [
+        'scripts' => ['https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js'],
+        'require' => [ 'popperjs', 'jquery' ],
+    ],
+    'bootstrap.head' => [
+        'styles' => ['https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css'],
+        'group' => 'head',
+    ],
+    'jquery' => [
+        'scripts' => ['https://code.jquery.com/jquery-3.2.1.slim.min.js'],
+        'group' => 'head',
+    ],
+    'popperjs' => [
+        'scripts' => ['https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js'],
+        'group' => 'head',
+    ],
+    'momentjs' => [
+        'scripts' => ['/js/moment/moment-2.10.3.min.js'],
+        'require' => ['jquery'],
+    ],
+    'bootstrap-datetimepicker' => [
+        'styles' => [
+            '/js/bt-dtp/style.css',
+            '/js/bt-dtp/theme-def.css',
         ],
-        // List of names of libraries, that must be required with this one.
-        'require' => [
-            'jquery'
-        ]
-    ],
-
-    [
-        'name' => 'jquery',
-        'files' => [
-            'js' => [
-                'http://cdn.jquery.com/jquery.min.js'
-            ]
-        ]
-    ],
-    [
-        'name' => 'momentjs',
-        'order' => 10,
-        'files' => [
-            'js' => [
-                '/js/moment/moment-2.10.3.min.js'
-            ]
-        ],
-        'require' => [
-            'jquery'
-        ]
-    ],
-    [
-        'name' => 'bootstrap-datetimepicker',
-        'files' => [
-            'css' => [
-                '/js/bt-dtp/style.css',
-                '/js/bt-dtp/theme-def.css',
-            ],
-            'js' => [
-                '/js/bt-dtp/bootstrap-datetimepicker.min.js'
-            ]
+        'scripts' => [
+            '/js/bt-dtp/bootstrap-datetimepicker.min.js'
         ],
         'require' => [
             'jquery',
             'momentjs'
         ]
     ],
-    [
-        'name' => 'namespaced-asset',
-        'files' => [
-            'css' => [
-                '{NAME}/ns-asset/style.css',
-            ],
-            'js' => [
-                '{NAME}/ns-asset/bootstrap-datetimepicker.min.js'
-            ]
+    'namespaced-asset' => [
+        'styles' => [
+            '{NAME}/ns-asset/style.css',
+        ],
+        'scripts' => [
+            '{NAME}/ns-asset/bootstrap-datetimepicker.min.js'
         ],
         'require' => [
             'jquery',
             'momentjs'
         ]
+    ],
+    'existing-asset' => [
+        'styles' => [ 'assets/style.css' ],
+        'scripts' => [ 'assets/script.js' ],
+        'require' => [ 'bootstrap' ]
     ]
 ];

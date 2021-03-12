@@ -1,8 +1,6 @@
 # Assetter
 Assets manager for PHP. Allow manage CSS and JS files in website and its dependencies. Also allows refresh cache in browsers by adding revisions of loaded files. Assetter allows you to register namespaces for files paths fo better managing if required.
 
-Assetter now allows You to load Your SASS and LESS styles directly to Your project, and compile them just-in-time and load compiled styles in the browser. You have to only register any of built-in plugins to enable this functionality (and install suggested composer packages).
-
 ## Installation
 
 ### Via composer.json
@@ -10,7 +8,7 @@ Assetter now allows You to load Your SASS and LESS styles directly to Your proje
 ```json
 {
     "require": {
-        "requtize/assetter": "^1.0.0"
+        "requtize/assetter": "^2.0.0"
     }
 }
 ```
@@ -18,7 +16,7 @@ Assetter now allows You to load Your SASS and LESS styles directly to Your proje
 ### Via Composer CLI
 
 ```cli
-composer require requtize/assetter:^1.0.0
+composer require requtize/assetter:^2.0.0
 ```
 
 ## Table of contents
@@ -26,7 +24,6 @@ composer require requtize/assetter:^1.0.0
     1. [Define collection array](#1-define-collection-array)
     2. [Create Assetter object](#2-create-assetter-object)
     3. [Load some libraries](#3-load-some-libraries)
-        * [Load custom library](#3a-load-custom-library)
     4. [Show loaded files in document](#4-show-loaded-files-in-document)
 * [Namespaces](#namespaces)
     1. [Register namespace](#1-register-namespace)
@@ -39,81 +36,71 @@ composer require requtize/assetter:^1.0.0
 ### 1. Define collection array
 First, you have to create array with collection of files.
 
-Here is full indexed array of **one** element in collection. **Collection is an array of arrays (check out**  *demo* **provided with this file).**
+Here is full indexed array of **one** element in collection.
 ```php
 [
-    'name'  => 'jquery',
-    'order' => 0,
-    'group' => 'head',
-    'files' => [
-        'js' => [/* ... */],
-        'css' => [/* ... */]
+    // Basic asset
+    'jquery' => [
+        'scripts' => [ 'https://code.jquery.com/jquery-3.6.0.min.js' ],
     ],
-    'require' => [
-        'jquery'
+    // Full asset
+    'theme' => [
+        'scripts' => [ '/assets/theme/js/script.min.js' ],
+        'styles' => [ '/assets/theme/css/theme.min.css' ],
+        'require' => [ 'jquery' ],
+        'group' => 'head',
+        'order' => 100
     ]
 ]
 ```
-* **name** *(Required*) - Name of library/assets files list.
-* **order** *(Optional*) - Number of position in loaded files. Lower number = higher in list.
-* **group** *(Optional*) - Group this library belongs to.
-* **files** *(Required*) - Store JS and CSS files' array to load.
-    * **js** *(Required*) - Stores array of JavaScript files paths (sigle value *(as string)* **NOT ALLOWED**).
-    * **css** *(Required*) - Stores array of CSS files paths (sigle value *(as string)* **NOT ALLOWED**).
-* **require** *(Optional*) - Stores array of names of libraries/assets (elements from collection) that must be loaded with this library. Dependencies.
+
+* **scripts** - Stores array of JavaScript files paths (sigle value *(as string)* **NOT ALLOWED**).
+* **styles** - Stores array of CSS files paths (sigle value *(as string)* **NOT ALLOWED**).
+* **require** - Stores array of names of libraries/assets (elements from collection) that must be loaded with this library. Dependencies.
+* **order** - Number of position in loaded files. Lower number = higher in list.
+* **group** - Group this library belongs to.
 
 ### 2. Create Assetter object
-Now we have to create object of Assetter. Assetter takes as it's argument object to FreshFile (fresh-file package is installed automatically with Assetter).
+Now we have to create object of Assetter. To work with Assetter You have to create collection (array) of assets that Assetter can manage.
 ```php
-use Requtize\FreshFile\FreshFile;
 use Requtize\Assetter\Assetter;
+use Requtize\Assetter\Collection;
 
-$ff = new FreshFile($pathToCacheFile);
-$assetter = new Assetter($ff);
+$assetsCollection = [];
+$collection = new Collection($assetsCollection);
+$assetter = new Assetter($collection);
 ```
-### 2a. Set assets collection
-To work with Assetter You have to create collection (array) of assets that Assetter can manage.
+
+### 3. Require some libraries
+Now, we can require some libraries. Here we require our `theme` asset, which required also `jquery` asset. 
 ```php
-$assetter->setCollection($collection);
+$assetter->require('theme');
 ```
 
-### 3. Load some libraries
-Now, we can load some libraries
-```php
-$assetter->load('bootstrap-datetimepicker');
-```
-
-### 3a. Load custom library
-We can also include custom libraries, that aren't in our defined collection. We have to call *load()* method, and pass array with exactly the same indexes like in our collection we define earlier. We have to define only one index - files, rest of indexes are optional in this case.
-```php
-$assetter->load([
-    'files' => [
-        'js' => [
-            '/my/own/file.js'
-        ]
-    ]
-]);
-```
-
-### 4. Show loaded files in document
-We have loaded our files. Now it's time to show it in document. For this, you can use three methods from Assetter that allows you to do this:
-* **all()** - Returns both CSS and JS files.
-* **css()** - Returns only CSS files.
-* **js()** - Returns only JS files.
-
-Every function accept one argument, with group name to returns. If you pass "*" or leave empty, Assetter returns files (of selected type) from all groups.
+### 4. Show required files in document
+We have required our files. Now it's time to show it in document. To do this, You have to build a collection for group of
+the assets, and then get the rendered assets.
 
 ```php
-// In HEAD of document we show all CSS (from all groups) and JS only from 'head' group.
-echo $assetter->css();
-echo $assetter->js('head');
-
-// After </body> tag we shows rest of JS
-echo $assetter->js('body');
-
-// Or just show from all groups
-echo $assetter->all();
+// Build default group
+$group = $assetter->build();
+// Build "body" group
+$group = $assetter->build('body');
+// Build "head" group
+$group = $assetter->build('head');
 ```
+
+To render the assets tags use one of the following method using the group.
+
+```php
+// Returns both CSS and JS files
+echo $group->all();
+// Returns only CSS files
+echo $group->css();
+// Returns only JS files
+echo $group->js();
+```
+
 ## Namespaces
 
 You can define namespaces, that will be applied for every asset path, which use it. Think of namespace (in this case) like some Root path to somethig, like root path to images in your project, or to (more for this) assets path. You can register multiple namespaces, and use multiple namespaces in paths to files for assets. What u need.
@@ -131,65 +118,66 @@ $assetter->registerNamespace('{ASSETS}', '/web/assets');
 ### 2. Usage registered namespaces
 When we have registered namespaces, we only now have to add name of namespace to these files path, we need to. Followed example, shows two assets, one works with namespace, second - without.
 ```php
-// With namespace
 [
-    'name'  => 'with',
-    'files' => [
-        'js' => [
-            '{ASSETS}/jquery-ui.min.js'
-        ],
-        'css' => [
-            '{ASSETS}/themes/smoothness/jquery-ui.css'
-        ]
-    ]
-],
-// Without namespace
-[
-    'name'  => 'without',
-    'files' => [
-        'js' => [
-            'http://code.jquery.com/ui/1.11.3/jquery-ui.min.js'
-        ],
-        'css' => [
-            'http://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css'
-        ]
+    // With namespace
+    'with' => [
+        'js' => [ '{ASSETS}/jquery-ui.min.js' ],
+        'css' => [  '{ASSETS}/themes/smoothness/jquery-ui.css' ]
+    ],
+    // Without namespace
+    'without' => [
+        'js' => [ 'http://code.jquery.com/ui/1.11.3/jquery-ui.min.js' ],
+        'css' => [ 'http://code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css' ]
     ]
 ]
 ```
 Namespace can be named as you want, here i provide proposal, you can use any way of name convencion, like: {NS}, [NS], %NS, |NS|, -NS, and combine small and big letters as names. But remember to add some special characters. Assetter uses [str_replace](http://php.net/manual/en/function.str-replace.php) for seach and replace namespaces, so if you named namespace with only letters, some assets paths can be damaged.
 
+## How to require CSS in \<head> and JS in \<body>?
 
-# LESS ans SCSS Compilers
+This separation of the elements is a common technique, tha allows web browsers renders a fully styled content,
+without rendering and downloading any JavaScripts at the beginning. Nowadays we require so many JS libs in our websites,
+all those files must be downloaded by browser at the place of occurence. Moving those files at the end of the body
+speeds up the page load.
 
-Assetter have built-in plugins for these compilers. To turn on this functionality, create selected plugin object, and pass it to register it:
-```php
-use Requtize\Assetter\Plugin\LeafoLessPhpPlugin;
-use Requtize\Assetter\Plugin\LeafoScssPhpPlugin;
-
-$assetter->registerPlugin(new LeafoLessPhpPlugin($basepath));
-$assetter->registerPlugin(new LeafoScssPhpPlugin($basepath));
-```
-Both plugins takes the argument of base path (from server root) to place, where application is placed - other words: the path to domain directory. You can albo create only one plugin, if You want use only one pre-processor.
-
-### Usage
-
-To use, you have to only load the .scss or .less files from collection:
+To achive that, You have to define the `head` and the `body` part of the asset, and then mix them together into one,
+like this:
 
 ```php
 [
-    'name'  => 'less-and-scss',
-    'files' => [
-        'css' => [
-            '/path/to/style.scss',
-            '/path/to/style.less',
-        ]
-    ]
+    // This goes to HEAD, only CSS
+    'bootstrap.head' => [
+        'styles' => [ 'bootstrap.min.css' ],
+        'group' => 'head',
+    ],
+    // This goes to BODY, all JS
+    'bootstrap.body' => [
+        'scripts' => [ 'bootstrap.min.js' ],
+        'group' => 'body',
+    ],
+    // This mix it up together
+    'bootstrap' => [
+        'require' => [ 'bootstrap.head', 'bootstrap.body' ],
+    ],
 ]
 ```
 
-Plugins automatically compile these files, it they are changed, and replace filenames to compiled versions. Also, FreshFile lib takes care of compilation cache, so once compiled file will not compile again until you change it.
+That defined asset You have to only require using the mixed name `bootstrap`. Assetter take care of the
+rest of the assets, and build them into proper defined group in building time.
 
-# @todo
-- DOC: Multiple versions of files array
-- DOC: Revisions
-- Add filemtime revisions instead of static numbers.
+```php
+$assetter->require('bootstrap');
+```
+
+Last part, you have to only build assets separate for HEAD and for the BODY. 
+
+```html
+<html>
+    <head>
+        <?php echo $assetter->build('body')->all(); ?>
+    </head>
+    <body>
+        <?php echo $assetter->build('head')->all(); ?>
+    </body>
+</html>
+```
