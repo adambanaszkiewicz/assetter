@@ -14,46 +14,28 @@ namespace Requtize\Assetter;
  */
 class Renderer implements RendererInterface
 {
-    /**
-     * @var array
-     */
-    protected $payload = [];
+    protected array $payload = [];
 
-    /**
-     * @param iterable $payload
-     */
     public function __construct(iterable $payload)
     {
         $this->payload = $payload;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPayload(): array
     {
         return $this->payload;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPayload(array $payload): void
     {
         $this->payload = $payload;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function all(): string
     {
         return $this->styles()."\n".$this->scripts();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function styles(): string
     {
         $cssList = $this->getStylesList();
@@ -62,9 +44,6 @@ class Renderer implements RendererInterface
         return implode("\n", $cssList);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function scripts(): string
     {
         $jsList = $this->getScriptsList();
@@ -73,118 +52,98 @@ class Renderer implements RendererInterface
         return implode("\n", $jsList);
     }
 
-    /**
-     * @return array
-     */
+    public function collectScripts(): array
+    {
+        return $this->getScriptsList();
+    }
+
+    public function collectStyles(): array
+    {
+        return $this->getStylesList();
+    }
+
     protected function getStylesList(): array
     {
         $result = [];
 
         foreach ($this->payload as $item) {
             if ($item['styles'] !== []) {
-                $result[] = [
-                    'files' => $item['styles']
-                ];
+                $result[] = array_map(function (array $file) {
+                    return $this->prepareLinkWithRevision($file);
+                }, $item['styles']);
             }
         }
 
-        return $this->arrayUnique($result);
+        return array_merge(...$this->arrayUnique($result));
     }
 
-    /**
-     * @param array $list
-     *
-     * @return array
-     */
     protected function transformListToLinkHtmlNodes(array $list): array
     {
         $result = [];
 
-        foreach ($list as $group) {
-            foreach ($group['files'] as $file) {
-                $link = $file['file'];
-
-                if ($file['revision']) {
-                    if (strpos($file['file'], '?') === false) {
-                        $link .= '?rev=' . $file['revision'];
-                    } else {
-                        $link .= '&rev=' . $file['revision'];
-                    }
-                }
-
-                $result[] = '<link rel="stylesheet" type="text/css" href="'.$link.'" />';
-            }
+        foreach ($list as $file) {
+            $result[] = '<link rel="stylesheet" type="text/css" href="' . $file . '" />';
         }
 
         return $result;
     }
 
-    /**
-     * @return array
-     */
     protected function getScriptsList(): array
     {
         $result = [];
 
         foreach ($this->payload as $item) {
             if ($item['scripts'] !== []) {
-                $result[] = [
-                    'files' => $item['scripts']
-                ];
+                $result[] = array_map(function (array $file) {
+                    return $this->prepareLinkWithRevision($file);
+                }, $item['scripts']);
             }
         }
 
-        return $this->arrayUnique($result);
+        return array_merge(...$this->arrayUnique($result));
     }
 
-    /**
-     * @param array $list
-     *
-     * @return array
-     */
     protected function transformListToScriptHtmlNodes(array $list): array
     {
         $result = [];
 
-        foreach ($list as $group) {
-            foreach ($group['files'] as $file) {
-                $link = $file['file'];
-
-                if ($file['revision']) {
-                    if (strpos($file['file'], '?') === false) {
-                        $link .= '?rev=' . $file['revision'];
-                    } else {
-                        $link .= '&rev=' . $file['revision'];
-                    }
-                }
-
-                $result[] = '<script src="'.$link.'"></script>';
-            }
+        foreach ($list as $file) {
+            $result[] = '<script src="' . $file . '"></script>';
         }
 
         return $result;
     }
 
-    /**
-     * @param array $list
-     *
-     * @return array
-     */
     protected function arrayUnique(array $list): array
     {
         $filesLoaded = [];
 
         foreach ($list as $gk => $group) {
-            foreach ($group['files'] as $fk => $file) {
-                if (\in_array($file['file'], $filesLoaded, true)) {
-                    unset($list[$gk]['files'][$fk]);
+            foreach ($group as $fk => $file) {
+                if (\in_array($file, $filesLoaded, true)) {
+                    unset($list[$gk][$fk]);
                     continue;
                 }
 
-                $filesLoaded[] = $file['file'];
+                $filesLoaded[] = $file;
             }
         }
 
         return $list;
+    }
+
+    private function prepareLinkWithRevision(array $file): string
+    {
+        $link = $file['file'];
+
+        if ($file['revision']) {
+            if (strpos($file['file'], '?') === false) {
+                $link .= '?rev=' . $file['revision'];
+            } else {
+                $link .= '&rev=' . $file['revision'];
+            }
+        }
+
+        return $link;
     }
 }

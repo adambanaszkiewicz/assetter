@@ -64,6 +64,15 @@ class Assetter implements AssetterInterface
         $this->collection = $collection ?? new Collection();
     }
 
+    public function standalone(): AssetterInterface
+    {
+        $self = clone $this;
+        $self->required = [];
+        $self->rendered = [];
+
+        return $self;
+    }
+
     /**
      * @inheritDoc
      */

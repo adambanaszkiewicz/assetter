@@ -17,6 +17,18 @@ use Requtize\Assetter\Exception\MissingAssetException;
 interface AssetterInterface
 {
     /**
+     * Returns itself, with all registered plugins, collections etc,
+     * but with empty require list. Can be used to require separate
+     * assets collection, outlide root.
+     *
+     * Remember, fron now on, this new object is just a copy, and
+     * is not attached to root. It has Its onw life cycle, and
+     * any changes in root one (collections, namespaces, plugins etc.)
+     * do not affect on the created standalone and vice versa.
+     */
+    public function standalone(): AssetterInterface;
+
+    /**
      * @param string $name
      * @param string $path
      */
