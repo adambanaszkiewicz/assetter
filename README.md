@@ -25,6 +25,7 @@ composer require requtize/assetter:^2.0.0
     2. [Create Assetter object](#2-create-assetter-object)
     3. [Load some libraries](#3-load-some-libraries)
     4. [Show loaded files in document](#4-show-loaded-files-in-document)
+* [Register Asset as part of Collection](#register-asset-as-part-of-collection)
 * [Namespaces](#namespaces)
     1. [Register namespace](#1-register-namespace)
     2. [Usage registered namespaces](#2-usage-registered-namespaces)
@@ -49,7 +50,8 @@ Here is full indexed array of **one** element in collection.
         'styles' => [ '/assets/theme/css/theme.min.css' ],
         'require' => [ 'jquery' ],
         'group' => 'head',
-        'order' => 100
+        'order' => 100,
+        'collection' => 'collection-name'
     ]
 ]
 ```
@@ -59,6 +61,7 @@ Here is full indexed array of **one** element in collection.
 * **require** - Stores array of names of libraries/assets (elements from collection) that must be loaded with this library. Dependencies.
 * **order** - Number of position in loaded files. Lower number = higher in list.
 * **group** - Group this library belongs to.
+* **collection** - Collection of assets from different modules. Read more on [Register Asset as part of Collection](#register-asset-as-part-of-collection)
 
 ### 2. Create Assetter object
 Now we have to create object of Assetter. To work with Assetter You have to create collection (array) of assets that Assetter can manage.
@@ -100,6 +103,41 @@ echo $group->css();
 // Returns only JS files
 echo $group->js();
 ```
+
+## Register Asset as part of Collection
+
+Lets say, You have script that manage Dynamic Forms. Script implements plugins that needs to be loaded with it. But plugins have different names and exists in dirrerent parts of app. How to load our script and all of the modules?
+
+Assetter have functionality calles `collections`. Collection is a name of some number of separate assets, that will be loaded as whole, when You require name of the collection.
+
+In example, we have main script, and define two plugins. Now all of these scripts have the same `collection` named `my-collection`:
+
+```php
+[
+    'main-script' => [
+        'scripts' => [ '/main-script.js' ],
+        'collection' => 'my-collection',
+    ],
+    'plugin-1' => [
+        'scripts' => [ '/plugin-1.js' ],
+        'collection' => 'my-collection',
+    ],
+    'plugin-2' => [
+        'scripts' => [ '/plugin-2.js' ],
+        'collection' => 'my-collection',
+    ],
+]
+```
+
+Now, You only need to call `require()` with name of the collection:
+
+```php
+$assetter->require('my-collection');
+```
+
+Assetter loads all the assets withing the `my-collection` collection.
+
+Assets will be required in order of declaring, or in order of `require` option defined in each of asset (if defined).
 
 ## Namespaces
 

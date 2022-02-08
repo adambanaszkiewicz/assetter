@@ -2,7 +2,7 @@
 
 /**
  * @license   MIT License
- * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016 - 2021, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
 namespace Requtize\Assetter\Tests\Unit;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * @license   MIT License
- * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016 - 2021, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
 namespace Requtize\Assetter;
@@ -62,12 +62,13 @@ class Collection implements CollectionInterface
         }
 
         $this->collection[$name] = [
-            'priority' => $data['priority'] ?? 0,
-            'scripts'  => $data['scripts'] ?? [],
-            'styles'   => $data['styles'] ?? [],
-            'group'    => $data['group'] ?? $this->defaultGroup,
-            'require'  => $data['require'] ?? [],
-            'included' => $data['included'] ?? [],
+            'priority'   => $data['priority'] ?? 0,
+            'scripts'    => $data['scripts'] ?? [],
+            'styles'     => $data['styles'] ?? [],
+            'group'      => $data['group'] ?? $this->defaultGroup,
+            'require'    => $data['require'] ?? [],
+            'included'   => $data['included'] ?? [],
+            'collection' => $data['collection'] ?? null,
         ];
     }
 
@@ -130,6 +131,30 @@ class Collection implements CollectionInterface
     public function getNames(): array
     {
         return array_keys($this->collection);
+    }
+
+    public function hasCollection(string $name): bool
+    {
+        foreach ($this->collection as $item) {
+            if ($item['collection'] === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function getNamesFromCollection(string $name): array
+    {
+        $names = [];
+
+        foreach ($this->collection as $itemName => $item) {
+            if ($item['collection'] === $name) {
+                $names[] = $itemName;
+            }
+        }
+
+        return $names;
     }
 
     /**

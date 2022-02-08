@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * @license   MIT License
- * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016 - 2021, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
 namespace Requtize\Assetter\Tests\Unit;
@@ -21,10 +21,6 @@ class AssetterTest extends TestCase
 {
     /**
      * @dataProvider providerComplexCollectionDependencies
-     *
-     * @param array $data
-     *
-     * @throws MissingAssetException
      */
     public function testRequire(array $data): void
     {
@@ -40,10 +36,6 @@ class AssetterTest extends TestCase
 
     /**
      * @dataProvider providerComplexCollectionDependencies
-     *
-     * @param array $data
-     *
-     * @throws MissingAssetException
      */
     public function testRequireMissingRoot(array $data): void
     {
@@ -57,10 +49,6 @@ class AssetterTest extends TestCase
 
     /**
      * @dataProvider providerComplexCollectionDependencies
-     *
-     * @param array $data
-     *
-     * @throws MissingAssetException
      */
     public function testUnrequire(array $data): void
     {
@@ -80,10 +68,6 @@ class AssetterTest extends TestCase
 
     /**
      * @dataProvider providerComplexCollectionDependencies
-     *
-     * @param array $data
-     *
-     * @throws MissingAssetException
      */
     public function testBundle(array $data): void
     {
@@ -104,10 +88,6 @@ class AssetterTest extends TestCase
 
     /**
      * @dataProvider providerComplexCollectionDependencies
-     *
-     * @param array $data
-     *
-     * @throws MissingAssetException
      */
     public function testBundleMissingDependency(array $data): void
     {
@@ -118,6 +98,23 @@ class AssetterTest extends TestCase
 
         $assetter->require('missing-dependency-root');
         $assetter->build();
+    }
+
+    /**
+     * @dataProvider providerComplexCollectionDependencies
+     */
+    public function testCollection(array $data): void
+    {
+        $collection = new Collection($data);
+        $assetter = new Assetter($collection);
+
+        $assetter->require('custom-collection-name');
+        $renderer = $assetter->build();
+
+        $this->assertEquals(
+            ['collection_root', 'collection_plugin', 'collection-plugin-2'],
+            array_keys($renderer->getPayload())
+        );
     }
 
     /**
@@ -152,6 +149,18 @@ class AssetterTest extends TestCase
                     ],
                     'missing-dependency-root' => [
                         'require' => [ 'missing-dependency' ],
+                    ],
+                    'collection_root' => [
+                        'scripts' => [ '/collection/root.js' ],
+                        'collection' => 'custom-collection-name',
+                    ],
+                    'collection_plugin' => [
+                        'scripts' => [ '/collection/plugin-1.js' ],
+                        'collection' => 'custom-collection-name',
+                    ],
+                    'collection-plugin-2' => [
+                        'scripts' => [ '/collection/plugin-2.js' ],
+                        'collection' => 'custom-collection-name',
                     ],
                 ],
             ],

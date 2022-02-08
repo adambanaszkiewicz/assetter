@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * @license   MIT License
- * @copyright Copyright (c) 2016 - 2020, Adam Banaszkiewicz
+ * @copyright Copyright (c) 2016 - 2021, Adam Banaszkiewicz
  * @link      https://github.com/requtize/assetter
  */
 namespace Requtize\Assetter;
@@ -185,7 +185,12 @@ class Assetter implements AssetterInterface
 
         foreach ($names as $name) {
             if (isset($this->collection[$name]) === false) {
-                throw MissingAssetException::fromName($name, $this->findAlternatives($name));
+                if ($this->collection->hasCollection($name)) {
+                    $this->require(...$this->collection->getNamesFromCollection($name));
+                    return;
+                } else {
+                    throw MissingAssetException::fromName($name, $this->findAlternatives($name));
+                }
             }
 
             if (\in_array($name, $this->required, true)) {
